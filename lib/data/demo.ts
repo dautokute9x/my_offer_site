@@ -32,6 +32,12 @@ function searchText(j: Job): string {
   return normText(parts.join(" "));
 }
 
+// Nhóm nghề đã chọn + slug nghề đã chọn -> tập id nghề.
+function occupationIdSet(groups: string[], slugs: string[]): number[] {
+  const gids = demoCatalog.groups.filter((g) => groups.includes(g.slug)).map((g) => g.id);
+  return demoCatalog.occupations.filter((o) => gids.includes(o.groupId) || slugs.includes(o.slug)).map((o) => o.id);
+}
+
 function salaryOf(j: Job, period: "month" | "year") {
   const [a, b] = period === "month" ? [j.monthlyMinYen, j.monthlyMaxYen] : [j.annualMinYen, j.annualMaxYen];
   return a == null && b == null ? null : { lo: a ?? b!, hi: b ?? a! };
@@ -49,8 +55,7 @@ function matches(j: Job, f: JobFilters): boolean {
     if (!j.prefectureIds.some((id) => ids.includes(id))) return false;
   }
   if (f.groups.length || f.occupations.length) {
-    const groupIds = c.groups.filter((g) => f.groups.includes(g.slug)).map((g) => g.id);
-    const ids = c.occupations.filter((o) => groupIds.includes(o.groupId) || f.occupations.includes(String(o.id))).map((o) => o.id);
+    const ids = occupationIdSet(f.groups, f.occupations);
     if (!j.occupationIds.some((id) => ids.includes(id))) return false;
   }
   if (f.salaryMinMan != null || f.salaryMaxMan != null) {
@@ -120,6 +125,7 @@ export async function listUpcomingInterviews(
 ) {
   const { jobs, interviews, open, now } = load(opts.now);
   const pids = demoCatalog.prefectures.filter((p) => o.prefectures.includes(p.code)).map((p) => p.id);
+  const oids = occupationIdSet([], o.occupations);
   const out: Array<InterviewEvent & { job: Job }> = [];
   for (const i of interviews) {
     const job = jobs.find((j) => j.id === i.jobId)!;
@@ -127,7 +133,7 @@ export async function listUpcomingInterviews(
     if (i.status !== "scheduled" || Date.parse(i.startsAt) <= now.getTime() || !open(job)) continue;
     if ((o.from && day < o.from) || (o.to && day > o.to)) continue;
     if (pids.length && !job.prefectureIds.some((p) => pids.includes(p))) continue;
-    if (o.occupations.length && !job.occupationIds.some((x) => o.occupations.includes(String(x)))) continue;
+    if (o.occupations.length && !job.occupationIds.some((x) => oids.includes(x))) continue;
     out.push({ ...i, job });
   }
   return out.sort((a, b) => a.startsAt.localeCompare(b.startsAt));

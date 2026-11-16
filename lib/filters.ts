@@ -15,7 +15,7 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 const list = (v: string | string[] | undefined, allowed: Set<string>) =>
   [...new Set(first(v).split(",").map((x) => x.trim()).filter((x) => allowed.has(x)))];
 const int = (s: string) => (/^\d{1,6}$/.test(s) ? Number(s) : null);
-const LEVELS = ["N1", "N2", "N3", "N4", "N5"];
+const LEVELS = ["N1", "N2", "N3", "N4", "N5", "none"];
 
 export function parseFilters(sp: SP, catalog: Catalog): JobFilters {
   const m = /^(\d*)-(\d*)$/.exec(first(sp.luong));
@@ -27,7 +27,7 @@ export function parseFilters(sp: SP, catalog: Catalog): JobFilters {
     q: first(sp.q).trim(),
     prefectures: list(sp.tinh, new Set(catalog.prefectures.map((p) => p.code))),
     groups: list(sp.nhom, new Set(catalog.groups.map((g) => g.slug))),
-    occupations: list(sp.nghe, new Set(catalog.occupations.map((o) => String(o.id)))),
+    occupations: list(sp.nghe, new Set(catalog.occupations.map((o) => o.slug))),
     salaryMinMan: m && m[1] ? Number(m[1]) : null,
     salaryMaxMan: m && m[2] ? Number(m[2]) : null,
     period: first(sp.ky) === "nam" ? "year" : "month",

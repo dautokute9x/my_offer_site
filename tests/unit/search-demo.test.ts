@@ -50,6 +50,7 @@ describe("searchJobs (demo)", () => {
     const onlyAnnual = all.find((j) => j.monthlyMinYen == null && j.annualMinYen != null)!;
     expect(r.items.some((j) => j.code === onlyAnnual.code)).toBe(false);
     const y = await searchJobs({ ...empty, period: "year", salaryMaxMan: 380 });
+    expect(y.items.length).toBeGreaterThan(0);
     expect(y.items.every((j) => (j.annualMinYen ?? j.annualMaxYen)! <= 3_800_000)).toBe(true);
   });
   it("tiếng Nhật: null vẫn đạt, N2 bị loại khi N3", async () => {
@@ -58,6 +59,14 @@ describe("searchJobs (demo)", () => {
     expect(all.find((j) => j.jpLevel === null && j.status === "published" && j.id !== 13)).toBeTruthy();
     for (const j of all.filter((x) => x.status === "published")) {
       expect(ok.has(j.code)).toBe(j.jpLevel !== "N2" && j.jpLevel !== "N1");
+    }
+  });
+  it("tiếng Nhật 'none': loại tin yêu cầu N, giữ null/none", async () => {
+    const r = await searchJobs({ ...empty, jpLevel: "none" });
+    const ok = new Set(r.items.map((j) => j.code));
+    expect(r.total).toBeGreaterThan(0);
+    for (const j of all.filter((x) => x.status === "published")) {
+      expect(ok.has(j.code)).toBe(j.jpLevel === null || j.jpLevel === "none");
     }
   });
   it("trang, sắp xếp", async () => {
@@ -90,6 +99,10 @@ describe("dữ liệu liên quan", () => {
     const l = await listUpcomingInterviews({ prefectures: [], occupations: [] });
     expect(l.every((i) => i.status === "scheduled" && i.job.status === "published")).toBe(true);
     expect(l.map((i) => i.startsAt)).toEqual([...l.map((i) => i.startsAt)].sort());
+    const f = await listUpcomingInterviews({ prefectures: ["13"], occupations: ["plc-mach-dien"] });
+    expect(f.length).toBeGreaterThan(0);
+    expect(f.every((i) => i.job.prefectureIds.includes(pid("13")) && i.job.occupationIds.includes(3))).toBe(true);
+    expect(await listUpcomingInterviews({ prefectures: ["27"], occupations: ["plc-mach-dien"] })).toEqual([]);
     const none = await listUpcomingInterviews({ from: "2999-01-01", prefectures: [], occupations: [] });
     expect(none).toEqual([]);
   });

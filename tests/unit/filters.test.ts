@@ -17,11 +17,14 @@ describe("filters", () => {
   });
   it("round-trip đầy đủ, mặc định không ghi, trang không phải số về 1", () => {
     const f = parseFilters(
-      { q: "ky su", tinh: "13", nhom: "dien,x", nghe: "3,999", luong: "20-40", ky: "nam", tiengnhat: "N3", kn: "2", ql: "thuong", pv: "1", sx: "luong", trang: "2" },
+      { q: "ky su", tinh: "13", nhom: "dien,x", nghe: "plc-mach-dien,khong-co", luong: "20-40", ky: "nam", tiengnhat: "N3", kn: "2", ql: "thuong", pv: "1", sx: "luong", trang: "2" },
       demoCatalog,
     );
-    expect(f).toMatchObject({ groups: ["dien"], occupations: ["3"], period: "year", sort: "luong", page: 2, hasInterview: true });
+    expect(f).toMatchObject({ groups: ["dien"], occupations: ["plc-mach-dien"], period: "year", sort: "luong", page: 2, hasInterview: true });
     expect(back(f)).toEqual(f);
+    const none = parseFilters({ tiengnhat: "none" }, demoCatalog);
+    expect(none.jpLevel).toBe("none");
+    expect(back(none)).toEqual(none);
     const empty = parseFilters({}, demoCatalog);
     expect(filtersToQuery(empty)).toBe("");
     expect(hasActiveFilters(empty)).toBe(false);
