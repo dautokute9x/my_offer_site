@@ -18,6 +18,7 @@ const notoJp = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: { default: siteDefaults.brandName, template: `%s | ${siteDefaults.brandName}` },
   description: "Việc làm kỹ sư tại Nhật Bản dành cho người Việt.",
 };
