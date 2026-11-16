@@ -1,20 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteForm, NoteForm, StatusForm } from "@/components/admin/ApplicationForms";
-import { STATUS_LABELS } from "@/lib/applications/status";
+import { STATUS_LABELS, UUID_RE } from "@/lib/applications/status";
 import { requireAdmin } from "@/lib/auth";
 import { isDemoMode } from "@/lib/data";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { formatJst } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function ApplicationDetail({ params }: { params: Promise<{ id: string }> }) {
   if (isDemoMode()) return null; // layout đã hiện thông báo demo
   const { id } = await params;
   await requireAdmin(`/admin/ho-so/${id}`);
-  if (!UUID.test(id)) notFound();
+  if (!UUID_RE.test(id)) notFound();
   const sb = await createServerSupabase();
   const [a, n] = await Promise.all([
     sb.from("applications").select("*").eq("id", id).maybeSingle(),

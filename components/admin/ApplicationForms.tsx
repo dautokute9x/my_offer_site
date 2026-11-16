@@ -17,16 +17,18 @@ function Msg({ s, id }: { s: AppState; id: string }) {
 
 export function StatusForm({ id, status }: { id: string; status: string }) {
   const uid = useId();
+  const locked = status === "pending_upload";
   const [s, action, pending] = useActionState<AppState, FormData>(changeStatus, {});
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="id" value={id} />
       <label className="text-sm font-semibold">Trạng thái
-        <select name="status" defaultValue={status} className={input} aria-describedby={s.error ? uid : undefined}>
-          {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+        <select name="status" defaultValue={status} disabled={locked} className={input} aria-describedby={s.error ? uid : undefined}>
+          {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k} disabled={k === "pending_upload"}>{l}</option>)}
         </select>
       </label>
-      <button type="submit" disabled={pending} className={btn}>Lưu trạng thái</button>
+      {locked && <p className="text-sm text-gray-600">Hồ sơ chưa tải xong CV</p>}
+      <button type="submit" disabled={pending || locked} className={btn}>Lưu trạng thái</button>
       <Msg s={s} id={uid} />
     </form>
   );

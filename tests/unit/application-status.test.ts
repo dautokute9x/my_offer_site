@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidStatus, STATUS_LABELS } from "@/lib/applications/status";
+import { isAdminSettableStatus, isValidStatus, STATUS_LABELS } from "@/lib/applications/status";
 
 describe("application status", () => {
   it("isValidStatus whitelist", () => {
@@ -13,5 +13,9 @@ describe("application status", () => {
       pending_upload: "Chờ tải CV", new: "Mới nhận", contacting: "Đang liên hệ", interview_scheduled: "Hẹn phỏng vấn",
       hired: "Trúng tuyển", rejected: "Không phù hợp", withdrawn: "Rút hồ sơ",
     });
+  });
+  it("pending_upload chỉ do hệ thống đặt", () => {
+    expect(isAdminSettableStatus("pending_upload")).toBe(false);
+    expect(isAdminSettableStatus("new")).toBe(true);
   });
 });

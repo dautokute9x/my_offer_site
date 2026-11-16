@@ -22,7 +22,7 @@ export default async function ApplicationsAdmin({ searchParams }: { searchParams
     .order("created_at", { ascending: false }).range((page - 1) * PAGE, page * PAGE - 1);
   if (tt) q = q.eq("status", tt);
   else q = q.or(`status.neq.pending_upload,created_at.gte.${staleCutoff()}`); // ẩn pending_upload quá 24 giờ
-  if (tin) q = q.eq("job_code", tin);
+  if (tin) q = q.ilike("job_code", tin.replace(/_/g, "\\_")); // không phân biệt hoa/thường; "_" là ký tự đại diện của ilike
   const { data, count, error } = await q;
   if (error) {
     console.error("[admin/ho-so]", error.code);
