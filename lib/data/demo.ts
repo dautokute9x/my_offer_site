@@ -82,7 +82,7 @@ export async function searchJobs(f: JobFilters, opts: Opts = {}) {
   };
   const cmp = (a: JobSummary, b: JobSummary): number => {
     if (code) {
-      const d = Number(b.code === code) - Number(a.code === code);
+      const d = Number(normCode(b.code) === code) - Number(normCode(a.code) === code);
       if (d) return d;
     }
     if (f.sort === "pv") {
@@ -104,7 +104,7 @@ export async function searchJobs(f: JobFilters, opts: Opts = {}) {
 
 export async function getJobByCode(code: string) {
   const { jobs, upcoming } = load();
-  const j = jobs.find((x) => x.code === normCode(code));
+  const j = jobs.find((x) => normCode(x.code) === normCode(code));
   return j && j.status !== "draft" ? { ...j, interviews: upcoming(j.id) } : null;
 }
 

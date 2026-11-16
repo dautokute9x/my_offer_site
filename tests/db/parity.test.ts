@@ -50,10 +50,15 @@ describe.skipIf(!process.env.DB_TEST)("parity SQL ↔ demo TS", () => {
     ["trang 2", { page: 2 }],
     ["412 không boost mã", { q: "412" }],
     ["lương trần + kinh nghiệm", { salaryMaxMan: 30, maxExperience: 2 }],
+    // Cố ý rỗng: ký tự đại diện LIKE phải được hiểu nguyên văn.
+    ["% nguyên văn", { q: "%" }],
+    ["_ nguyên văn", { q: "ky_su" }],
   ];
-  it.each(cases)("search_jobs: %s", async (_, part) => {
+  const EMPTY = new Set(["% nguyên văn", "_ nguyên văn"]);
+  it.each(cases)("search_jobs: %s", async (name, part) => {
     const f = { ...BASE, ...part };
     const ts = await demo.searchJobs(f, { now: NOW });
+    expect(ts.total > 0).toBe(!EMPTY.has(name));
     const db = json(`search_jobs(${lit(JSON.stringify({ ...f, now: NOW.toISOString() }))})`);
     expect(db.items.map((j: { code: string }) => j.code)).toEqual(ts.items.map((j) => j.code));
     expect([db.total, db.page, db.pageSize, db.pageCount]).toEqual([ts.total, ts.page, ts.pageSize, ts.pageCount]);
@@ -77,6 +82,19 @@ describe.skipIf(!process.env.DB_TEST)("parity SQL ↔ demo TS", () => {
     expect(sql(`begin;
       insert into jobs (code, slug, status, title_vi, title_ja) values ('DRAFT9', 'draft-9', 'draft', 'Nháp', '下書き');
       select coalesce(get_job('DRAFT9')::text, 'null'); rollback;`)).toBe("null");
+  });
+
+  it("mã không phân biệt hoa thường: get_job, boost, unique lower(code)", () => {
+    // 00412 đổi tiêu đề → updated_at mới nhất, cũng khớp 'abc123'; boost phải đưa ABC123 lên trước.
+    const out = sql(`begin;
+      update jobs set code = 'ABC123' where code = '10587';
+      update jobs set title_vi = title_vi || ' abc123' where code = '00412';
+      select get_job('abc123')->>'code';
+      select get_job('#Abc123')->>'code';
+      select (select string_agg(x->>'code', ',') from jsonb_array_elements(search_jobs('{"q": "ABC123"}')->'items') x);
+      select (select string_agg(x->>'code', ',') from jsonb_array_elements(search_jobs('{"q": "abc12"}')->'items') x);
+      rollback;`);
+    expect(out.split("\n")).toEqual(["ABC123", "ABC123", "ABC123,00412", "00412,ABC123"]);
   });
 
   it("related_jobs", async () => {

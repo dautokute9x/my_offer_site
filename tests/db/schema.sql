@@ -64,6 +64,17 @@ begin
   if (select search_text from jobs where code = '00412') not like '%nghe qqz%' then raise exception 'search_text không cập nhật khi sửa nghề'; end if;
 end $$;
 
+-- Mã tin unique không phân biệt hoa thường.
+do $$ begin
+  insert into jobs (code, slug, title_vi, title_ja) values ('abc1', 'x', 'x', 'x');
+  begin
+    insert into jobs (code, slug, title_vi, title_ja) values ('ABC1', 'x', 'x', 'x');
+    raise exception 'trùng mã khác hoa thường phải lỗi';
+  exception when unique_violation then null;
+  end;
+  delete from jobs where code = 'abc1';
+end $$;
+
 -- seed_demo tính ngày tương đối theo app.demo_now (Task 3 dùng để ghim now).
 set app.demo_now = '2026-11-16T20:00:00Z';  -- = 2026-11-17 05:00 JST
 \i supabase/seed_demo.sql

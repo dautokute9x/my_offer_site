@@ -13,6 +13,14 @@ create function norm_code(t text) returns text language sql immutable parallel s
   select regexp_replace(regexp_replace(norm_text(t), '^#', ''), '\s+', '', 'g')
 $$;
 
+-- Mẫu LIKE '%t%' khớp nguyên văn t (thoát \ % _) — dùng được index trigram jobs_search_text_trgm.
+create function like_contains(t text) returns text language sql immutable parallel safe set search_path = pg_catalog as $$
+  select '%' || replace(replace(replace(t, '\', '\\'), '%', '\%'), '_', '\_') || '%'
+$$;
+
+-- Mã tin không phân biệt hoa thường (tra cứu bằng lower(code) = norm_code(...)).
+create unique index jobs_code_lower on jobs (lower(code));
+
 -- Sắp theo mã: `lower(code) collate "C", code collate "C" desc` = String.localeCompare với mã [A-Za-z0-9]
 -- (không phân biệt hoa thường, chữ thường trước), không phụ thuộc collation của DB.
 
@@ -66,7 +74,8 @@ create function search_jobs(p jsonb) returns jsonb
 language sql stable security invoker set search_path = public as $$
   with f as (
     select coalesce((p->>'now')::timestamptz, now()) as now,
-      array_remove(string_to_array(regexp_replace(norm_text(coalesce(p->>'q', '')), '^#', ''), ' '), '') as tokens,
+      array(select like_contains(t) from unnest(string_to_array(regexp_replace(norm_text(coalesce(p->>'q', '')), '^#', ''), ' ')) t
+            where t <> '') as pats,
       norm_code(coalesce(p->>'q', '')) as code,
       array(select jsonb_array_elements_text(coalesce(p->'prefectures', '[]'))) as prefs,
       array(select jsonb_array_elements_text(coalesce(p->'groups', '[]'))) as groups,
@@ -78,7 +87,7 @@ language sql stable security invoker set search_path = public as $$
       (p->>'maxExperience')::int as maxexp,
       coalesce((p->>'hasInterview')::bool, false) as has_pv,
       coalesce(p->>'sort', 'moi') as sort,
-      coalesce((p->>'page')::int, 1) as page
+      greatest(coalesce((p->>'page')::int, 1), 1) as page
   ), m as (
     select j.id, j.code, j.updated_at,
       -- salaryOf(): thiếu một đầu thì lấy đầu còn lại
@@ -88,7 +97,10 @@ language sql stable security invoker set search_path = public as $$
         where e.job_id = j.id and e.status = 'scheduled' and e.starts_at > f.now) as next_at
     from jobs j, f
     where j.status = 'published' and (j.valid_through is null or j.valid_through > f.now)
-      and (select bool_and(strpos(j.search_text, t) > 0) from unnest(f.tokens) t) is not false
+      -- Từ khóa đầu là điều kiện đơn lẻ để planner dùng index trigram; LIKE ALL kiểm tra đủ mọi từ khóa.
+      -- shortcut: index chỉ lọc theo từ khóa đầu, đổi sang từ khóa dài nhất nếu truy vấn nhiều từ chậm.
+      and j.search_text like (select coalesce(f.pats[1], '%') from f)
+      and j.search_text like all (f.pats)
       and (cardinality(f.prefs) = 0 or exists (select 1 from job_prefectures jp join prefectures pr on pr.id = jp.prefecture_id
                                                where jp.job_id = j.id and pr.code = any(f.prefs)))
       and (cardinality(f.groups) + cardinality(f.occs) = 0 or exists (
@@ -103,7 +115,7 @@ language sql stable security invoker set search_path = public as $$
              where jb.job_id = j.id and b.slug = s and jb.value))
   ), r as (
     select m.id, row_number() over (order by
-        m.code = f.code desc,  -- mã khớp chính xác (normCode) lên đầu
+        lower(m.code) = f.code desc,  -- mã khớp chính xác (normCode, không phân biệt hoa thường) lên đầu
         case when f.sort = 'pv' then m.next_at end nulls last,
         case when f.sort = 'luong' then m.hi end desc nulls last,
         case when f.sort not in ('pv', 'luong') then m.updated_at end desc,
@@ -125,7 +137,7 @@ $$;
 create function get_job(p_code text) returns jsonb
 language sql stable security invoker set search_path = public as $$
   select job_json(j.id) || jsonb_build_object('interviews', job_upcoming(j.id, now()))
-  from jobs j where j.code = norm_code(p_code) and j.status <> 'draft'
+  from jobs j where lower(j.code) = norm_code(p_code) and j.status <> 'draft'
 $$;
 
 -- Điểm = 2 × số nghề chung + số tỉnh chung; chỉ tin đang tuyển, điểm > 0.
