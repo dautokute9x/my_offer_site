@@ -7,6 +7,20 @@ const LEVELS: [string, string][] = [["", "Chưa chọn"], ["N1", "N1"], ["N2", "
 const input = "mt-1 block min-h-11 w-full rounded border border-slate-400 px-3 py-2";
 const FIELDS = ["fullName", "email", "phone", "facebook", "jpLevel", "file", "note", "consent"];
 
+// XMLHttpRequest (không phải fetch) để có sự kiện tiến độ tải lên.
+function putFile(url: string, file: File, onPct: (n: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open("PUT", url);
+    x.setRequestHeader("content-type", file.type || "application/octet-stream");
+    x.setRequestHeader("x-upsert", "false");
+    x.upload.onprogress = (e) => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };
+    x.onload = () => (x.status >= 200 && x.status < 300 ? resolve() : reject(new Error(`upload ${x.status}`)));
+    x.onerror = x.onabort = x.ontimeout = () => reject(new Error("upload network"));
+    x.send(file);
+  });
+}
+
 type Props = { kind: "apply" | "consult"; jobCode: string | null; jobTitle?: string; consentVersion: string; retentionMonths: number };
 
 export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, consentVersion, retentionMonths }: Props) {
@@ -15,6 +29,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
   const [general, setGeneral] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
   const submittingRef = useRef(false);
   const keyRef = useRef<string>("");
   const formRef = useRef<HTMLFormElement>(null);
@@ -36,16 +51,11 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
     const fd = new FormData(ev.currentTarget);
     const cv = fd.get("cv");
     const f = cv instanceof File && cv.name ? cv : null;
-    fd.set("kind", kind);
-    fd.set("idempotencyKey", keyRef.current);
-    fd.set("consentVersion", consentVersion);
-    fd.set("consent", fd.get("consent") ? "true" : "false");
-    if (jobCode) fd.set("jobCode", jobCode);
-    if (!apply) fd.delete("cv");
     const probe: ApplicationInput = {
       kind, jobCode, fullName: String(fd.get("fullName") ?? ""), email: String(fd.get("email") ?? ""), phone: String(fd.get("phone") ?? ""),
       facebook: String(fd.get("facebook") ?? ""), jpLevel: String(fd.get("jpLevel") ?? "") as ApplicationInput["jpLevel"], note: String(fd.get("note") ?? ""),
-      consent: fd.get("consent") === "true", idempotencyKey: keyRef.current, file: apply && f ? { name: f.name, size: f.size, type: f.type } : null,
+      consent: fd.get("consent") !== null, idempotencyKey: keyRef.current, consentVersion,
+      file: apply && f ? { name: f.name, size: f.size, type: f.type } : null,
     };
     const errs = validateApplication(probe);
     setGeneral("");
@@ -57,8 +67,23 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const res = await fetch("/api/applications/start", { method: "POST", body: fd });
-      const data = await res.json().catch(() => null);
+      const post = (url: string, body: object) => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      let res = await post("/api/applications/start", probe);
+      let data = await res.json().catch(() => null);
+      // Có CV: tải thẳng lên Storage rồi để máy chủ kiểm tra tệp thật; chỉ phản hồi của complete mới là thành công.
+      if (res.ok && data?.upload && typeof data.id === "string" && f) {
+        setProgress(0);
+        try {
+          await putFile(data.upload.signedUrl, f, setProgress);
+        } catch {
+          setGeneral("Không tải được CV lên. Dữ liệu của bạn vẫn được giữ — vui lòng thử lại.");
+          return;
+        } finally {
+          setProgress(null);
+        }
+        res = await post("/api/applications/complete", { id: data.id, idempotencyKey: keyRef.current });
+        data = await res.json().catch(() => null);
+      }
       const se = data?.errors && typeof data.errors === "object" ? (data.errors as Record<string, string>) : null;
       if (isSuccess(res.ok, data)) setDone(`Đã nhận hồ sơ — mã ${data.refCode}`);
       else if (se && Object.keys(se).some((k) => se[k] && visible(k))) {
@@ -116,6 +141,12 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
         </label>
         {errors.consent && <p id="e-consent" className="mt-1 text-sm font-semibold text-red-800">{errors.consent}</p>}
       </div>
+      {progress !== null && (
+        <label className="block text-sm font-semibold">
+          Đang tải CV… {progress}%
+          <progress value={progress} max={100} className="mt-1 block w-full" />
+        </label>
+      )}
       <button type="submit" disabled={submitting} aria-busy={submitting} className="inline-flex min-h-11 items-center justify-center rounded bg-brand px-6 font-semibold text-white disabled:opacity-60">
         {submitting ? "Đang gửi…" : general ? "Thử lại" : apply ? "Gửi hồ sơ" : "Gửi yêu cầu tư vấn"}
       </button>

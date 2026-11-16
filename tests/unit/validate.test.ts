@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validateApplication, sniffFileKind, MAX_CV_BYTES, type ApplicationInput } from "@/lib/validate";
 
-const base: ApplicationInput = { kind: "apply", jobCode: "00412", fullName: "Nguyễn Văn A", email: "", phone: "", facebook: "", jpLevel: "", note: "", consent: true, idempotencyKey: "k", file: { name: "cv.pdf", size: 1000, type: "application/pdf" } };
+const base: ApplicationInput = { kind: "apply", jobCode: "00412", fullName: "Nguyễn Văn A", email: "", phone: "", facebook: "", jpLevel: "", note: "", consent: true, idempotencyKey: "k", consentVersion: "v1", file: { name: "cv.pdf", size: 1000, type: "application/pdf" } };
 const p = { ...base, phone: "0901234567" };
 
 describe("validateApplication", () => {
@@ -35,6 +35,14 @@ describe("validateApplication", () => {
     expect(validateApplication({ ...base, facebook: "https://www.facebook.com/abc" })).toEqual({});
     expect(validateApplication({ ...base, facebook: "nguyen.van.a" })).toEqual({});
     expect(validateApplication({ ...p, facebook: "http://evil.example" }).facebook).toBeDefined();
+  });
+  it("consentVersion", () => {
+    expect(validateApplication({ ...p, consentVersion: "" }).consentVersion).toBeDefined();
+    expect(validateApplication({ ...p, consentVersion: "x".repeat(51) }).consentVersion).toBeDefined();
+  });
+  it("email/tên tệp quá dài", () => {
+    expect(validateApplication({ ...p, email: "a".repeat(250) + "@b.vn" }).email).toBeDefined();
+    expect(validateApplication({ ...p, file: { name: "a".repeat(197) + ".pdf", size: 5, type: "" } }).file).toBeDefined();
   });
   it("idempotencyKey", () => expect(validateApplication({ ...p, idempotencyKey: " " }).idempotencyKey).toBeDefined());
 });
