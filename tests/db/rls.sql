@@ -72,6 +72,11 @@ do $$ begin
   end;
   if is_admin() then raise exception 'authenticated thành admin'; end if;
 end $$;
+do $$ declare n int; begin
+  update applications set status = 'hired';
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'authenticated không phải admin sửa được applications (% dòng)', n; end if;
+end $$;
 reset role;
 
 set role authenticated;
