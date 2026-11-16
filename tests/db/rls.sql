@@ -6,9 +6,9 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@example.test'),
   ('00000000-0000-0000-0000-00000000000b', 'user@example.test');
 insert into admins (user_id) values ('00000000-0000-0000-0000-00000000000a');
-insert into jobs (code, slug, status, title_vi, title_ja) values ('DRAFT1', 'draft-1', 'draft', 'Tin nháp', '下書き');
-insert into job_prefectures (job_id, prefecture_id) select id, 13 from jobs where code = 'DRAFT1';
-insert into interview_events (job_id, starts_at) select id, now() + interval '1 day' from jobs where code = 'DRAFT1';
+insert into jobs (code, slug, status, title_vi, title_ja) values ('draft1', 'draft-1', 'draft', 'Tin nháp', '下書き');
+insert into job_prefectures (job_id, prefecture_id) select id, 13 from jobs where code = 'draft1';
+insert into interview_events (job_id, starts_at) select id, now() + interval '1 day' from jobs where code = 'draft1';
 insert into applications (ref_code, kind, full_name, consent_version, consent_at, idempotency_key, ip_hash)
   values ('HS-ABCDEF', 'consult', 'Nguyễn Văn A', 'v1', now(), 'k-1', 'h');
 insert into application_notes (application_id, body) select id, 'ghi chú' from applications;
@@ -44,6 +44,11 @@ begin
   update site_settings set data = '{}';
   get diagnostics n = row_count;
   if n <> 0 then raise exception '% sửa được site_settings', who; end if;
+  -- RPC công khai (0002): không lộ tin draft.
+  if (search_jobs('{"q": "draft1"}')->>'total')::int <> 0 then raise exception '% search_jobs thấy tin draft', who; end if;
+  if get_job('draft1') is not null then raise exception '% get_job trả tin draft', who; end if;
+  if (search_jobs('{}')->>'total')::int = 0 or get_job('00412') is null then
+    raise exception '% không gọi được RPC công khai', who; end if;
   -- Phần công khai vẫn đọc được.
   if (select count(*) from jobs) = 0 or (select count(*) from prefectures) <> 47
      or (select count(*) from site_settings) <> 1 or (select count(*) from interview_events) = 0 then
@@ -76,6 +81,8 @@ do $$ begin
   if (select count(*) from applications) <> 1 then raise exception 'admin không đọc được applications'; end if;
   if (select count(*) from application_notes) <> 1 then raise exception 'admin không đọc được application_notes'; end if;
   if (select count(*) from jobs where status = 'draft') <> 1 then raise exception 'admin không thấy tin draft'; end if;
+  if get_job('draft1') is not null or (search_jobs('{"q": "draft1"}')->>'total')::int <> 0 then
+    raise exception 'RPC công khai trả tin draft cho admin'; end if;
   if (select count(*) from storage.objects where bucket_id = 'cvs') <> 1 then raise exception 'admin không đọc được CV'; end if;
   update applications set status = 'new';
   delete from storage.objects where bucket_id = 'cvs';

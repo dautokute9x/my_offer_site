@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "e2e": "playwright test",
-    "db:test": "bash scripts/db-local.sh reset && for f in tests/db/*.sql; do case $f in *supabase-stubs.sql) continue;; esac; bash scripts/db-local.sh psql -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done",
+    "db:test": "bash scripts/db-local.sh reset && for f in tests/db/*.sql; do case $f in *supabase-stubs.sql) continue;; esac; bash scripts/db-local.sh psql -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done && DB_TEST=1 vitest run tests/db/parity.test.ts",
     "db:seed": "bash scripts/db-local.sh reset",
     "db:gen-seed": "node --experimental-strip-types scripts/gen-seed.mts"
   },
