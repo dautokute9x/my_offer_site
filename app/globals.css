@@ -25,3 +25,7 @@ body {
   outline: 2px solid #176ac0;
   outline-offset: 2px;
 }
+
+footer :focus-visible {
+  outline-color: #ffffff;
+}

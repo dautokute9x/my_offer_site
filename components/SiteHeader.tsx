@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MobileMenu from "@/components/MobileMenu";
 import { siteDefaults } from "@/lib/site-defaults";
 
 const nav = [
@@ -26,10 +27,7 @@ export default function SiteHeader() {
             Nhận tư vấn
           </Link>
         </nav>
-        <details className="relative md:hidden">
-          <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold text-navy">
-            Menu
-          </summary>
+        <MobileMenu>
           <nav
             aria-label="Menu di động"
             className="absolute right-0 z-10 mt-1 flex w-56 flex-col rounded border border-slate-200 bg-white p-2 shadow"
@@ -43,7 +41,7 @@ export default function SiteHeader() {
               Nhận tư vấn
             </Link>
           </nav>
-        </details>
+        </MobileMenu>
       </div>
     </header>
   );
