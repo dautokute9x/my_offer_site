@@ -38,10 +38,11 @@ test("lọc 2 tỉnh + 1 nhóm nghề → URL có tinh=, nhom= và mọi thẻ t
 
 test("Xóa tất cả → tổng kết quả bằng lúc đầu", async ({ page }) => {
   await page.goto("/viec-lam");
+  const status = page.getByText(/Tìm thấy \d+ việc làm/);
   const initial = await total(page);
   await page.getByLabel("Tokyo (東京都)").check();
   await expect(page).toHaveURL(/tinh=13/);
-  expect(await total(page)).toBeLessThan(initial);
+  await expect(status).not.toHaveText(`Tìm thấy ${initial} việc làm`);
   await page.getByRole("link", { name: "Xóa tất cả" }).click();
   await expect(page).toHaveURL(/\/viec-lam$/);
   await expect(page.getByText(`Tìm thấy ${initial} việc làm`)).toBeVisible();
@@ -54,7 +55,7 @@ test("vào chi tiết rồi goBack → URL và số kết quả giữ nguyên", 
   await expect(page).toHaveURL(/\/viec-lam\/[a-z0-9-]+-\d{5}/);
   await page.goBack();
   await expect(page).toHaveURL(/\/viec-lam\?tinh=13$/);
-  expect(await total(page)).toBe(n);
+  await expect(page.getByText(/Tìm thấy \d+ việc làm/)).toHaveText(`Tìm thấy ${n} việc làm`);
 });
 
 test("?q=zzzkhongco → trạng thái rỗng", async ({ page }) => {

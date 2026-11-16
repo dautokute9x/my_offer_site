@@ -26,11 +26,9 @@ export default async function JobsPage({ searchParams }: Props) {
   const { items, total, pageCount } = await searchJobs(f, { simulateError: sp.demo_error === "1" });
   const sorts = [["moi", "Mới cập nhật"], ["pv", "Lịch phỏng vấn gần nhất"], ["luong", "Lương cao nhất"]];
   return (
-    <div className="lg:grid lg:grid-cols-[18rem_1fr] lg:gap-6">
-      <aside className="mb-4 lg:sticky lg:top-4 lg:mb-0 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
-        <FilterPanel catalog={catalog} filters={f} total={total} />
-      </aside>
-      <section className="min-w-0 space-y-4">
+    // Thứ tự DOM: tìm kiếm trước bộ lọc (bàn phím); lưới CSS giữ sidebar bên trái ở lg.
+    <div className="grid gap-4 lg:grid-cols-[18rem_1fr] lg:gap-x-6">
+      <section className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
         <h1 className="text-2xl font-bold text-navy">Việc làm kỹ sư tại Nhật</h1>
         <form action="/viec-lam" method="get" className="flex flex-wrap items-end gap-2">
           {/* Giữ các bộ lọc khác; đổi từ khóa hoặc sắp xếp thì về trang 1. */}
@@ -48,6 +46,11 @@ export default async function JobsPage({ searchParams }: Props) {
           </label>
           <button className="min-h-11 rounded bg-brand px-5 font-semibold text-white">Tìm</button>
         </form>
+      </section>
+      <aside className="lg:sticky lg:top-4 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
+        <FilterPanel catalog={catalog} filters={f} total={total} />
+      </aside>
+      <section className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-2">
         <ActiveChips filters={f} catalog={catalog} />
         <ViewToggle summary={<p role="status" className="font-semibold">Tìm thấy {total} việc làm</p>}>
           {items.length === 0 ? (
