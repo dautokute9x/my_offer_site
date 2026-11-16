@@ -44,7 +44,7 @@ describe("requireAdmin", () => {
 
 describe("safeNext", () => {
   it.each([
-    ["//evil.com", "/admin"], ["https://evil.com", "/admin"], ["/adminx", "/admin"], ["/admin//x", "/admin"],
+    ["//evil.com", "/admin"], ["https://evil.com", "/admin"], ["/adminx", "/admin"],
     ["/admin@evil.com", "/admin"], ["/\\evil.com", "/admin"], ["/admin/..//evil.com", "/admin"], ["/admin/../..", "/admin"],
     ["/admin%2F%2Fevil", "/admin"], ["/admin\r\nx", "/admin"], [undefined, "/admin"],
     ["/admin\\evil", "/admin/evil"], ["/admin//x", "/admin//x"], ["/admin/ho-so", "/admin/ho-so"], ["/admin", "/admin"], ["/admin/ho-so?x=1", "/admin/ho-so?x=1"],
