@@ -50,6 +50,20 @@ begin
   delete from jobs where id = j;
 end $$;
 
+-- Sửa alias danh mục → search_text của tin liên quan cập nhật, updated_at giữ nguyên.
+do $$ declare u timestamptz;
+begin
+  select updated_at into u from jobs where code = '00412';
+  update skills set aliases = array['Ｚｚｑ Alias'] where name = 'AutoCAD';
+  if (select search_text from jobs where code = '00412') not like '%' || norm_text('Ｚｚｑ Alias') || '%' then
+    raise exception 'search_text không cập nhật khi sửa alias kỹ năng'; end if;
+  if (select updated_at from jobs where code = '00412') <> u then raise exception 'sửa danh mục không được đổi updated_at'; end if;
+  update prefectures set aliases = aliases || 'Qqtokyo'::text where id = 13;
+  if (select search_text from jobs where code = '00412') not like '%qqtokyo%' then raise exception 'search_text không cập nhật khi sửa tỉnh'; end if;
+  update occupations set name_vi = 'Nghề Qqz' where id = 2;
+  if (select search_text from jobs where code = '00412') not like '%nghe qqz%' then raise exception 'search_text không cập nhật khi sửa nghề'; end if;
+end $$;
+
 -- seed_demo tính ngày tương đối theo app.demo_now (Task 3 dùng để ghim now).
 set app.demo_now = '2026-11-16T20:00:00Z';  -- = 2026-11-17 05:00 JST
 \i supabase/seed_demo.sql

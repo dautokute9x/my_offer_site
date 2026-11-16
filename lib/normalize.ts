@@ -1,5 +1,6 @@
 export function normText(s: string): string {
   return s
+    .replace(/\uFEFF/g, "") // BOM/zero-width no-break space: bỏ hẳn, không thành khoảng trắng
     .normalize("NFKC")
     .toLowerCase()
     .normalize("NFD")

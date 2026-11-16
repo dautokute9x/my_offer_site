@@ -58,6 +58,15 @@ reset role;
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
 do $$ begin perform pg_temp.assert_public('authenticated'); end $$;
+-- Không tự cấp quyền admin cho chính mình.
+do $$ begin
+  begin
+    insert into admins (user_id) values (auth.uid());
+    raise exception 'authenticated tự thêm được vào admins';
+  exception when insufficient_privilege then null;
+  end;
+  if is_admin() then raise exception 'authenticated thành admin'; end if;
+end $$;
 reset role;
 
 set role authenticated;
@@ -86,6 +95,7 @@ do $$ begin
   if norm_text('ガス') <> 'ガス' then raise exception 'norm_text mất dakuten'; end if;
   if norm_text('ＡｕｔｏＣＡＤ') <> 'autocad' then raise exception 'norm_text full-width'; end if;
   if norm_text('東京都') <> '東京都' then raise exception 'norm_text kanji'; end if;
+  if norm_text('a' || U&'\FEFF' || 'b') <> 'ab' then raise exception 'norm_text phải bỏ U+FEFF'; end if;
 end $$;
 
 rollback;

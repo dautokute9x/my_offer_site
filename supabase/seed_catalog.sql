@@ -1,4 +1,5 @@
 -- Sinh tự động bởi `npm run db:gen-seed` (scripts/gen-seed.mts). Không sửa tay.
+-- Chạy một lần trên DB mới; chạy lại sẽ lỗi unique (an toàn, không ghi gì).
 begin;
 insert into prefectures (id, code, name_ja, name_vi, romaji, region, aliases) values
   (1, '01', '北海道', 'Hokkaido', 'Hokkaido', 'Hokkaido', array['北海道', '北海', 'Hokkaido']),

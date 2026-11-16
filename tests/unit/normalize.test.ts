@@ -8,6 +8,7 @@ describe("normalize", () => {
     expect(normText("東京都")).toBe("東京都");
     expect(normText("ガス")).toBe("ガス");
     expect(normText("ﾊﾟｲﾌﾟ")).toBe("パイプ");
+    expect(normText("a\uFEFFb")).toBe("ab");
   });
   it("normCode", () => {
     expect(normCode("＃００４１２ ")).toBe("00412");

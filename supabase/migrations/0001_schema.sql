@@ -6,7 +6,7 @@
 create function norm_text(t text) returns text
 language sql immutable parallel safe set search_path = pg_catalog as $$
   select normalize(btrim(regexp_replace(replace(regexp_replace(
-    normalize(lower(normalize(t, NFKC)), NFD), '[\u0300-\u036f]', '', 'g'), 'đ', 'd'), '\s+', ' ', 'g'), ' '), NFC)
+    normalize(lower(normalize(replace(t, U&'\FEFF', ''), NFKC)), NFD), '[\u0300-\u036f]', '', 'g'), 'đ', 'd'), '\s+', ' ', 'g'), ' '), NFC)
 $$;
 
 -- Danh mục (id tường minh khi seed, sequence được đặt lại trong seed_catalog.sql)
@@ -200,9 +200,23 @@ create trigger job_occupations_search_text after insert or update or delete on j
 create trigger job_skills_search_text after insert or update or delete on job_skills
   for each row execute function job_links_touch();
 
+-- Sửa tên/alias danh mục: chạm các tin liên quan để trigger BEFORE tính lại search_text (không đổi updated_at).
+create function catalog_touch() returns trigger language plpgsql set search_path = public as $$
+begin
+  execute format('update jobs set search_text = '''' where id in (select job_id from %I where %I = $1)', tg_argv[0], tg_argv[1])
+    using new.id;
+  return null;
+end $$;
+create trigger prefectures_search_text after update of name_ja, name_vi, romaji, aliases on prefectures
+  for each row execute function catalog_touch('job_prefectures', 'prefecture_id');
+create trigger occupations_search_text after update of name_vi, name_ja, aliases on occupations
+  for each row execute function catalog_touch('job_occupations', 'occupation_id');
+create trigger skills_search_text after update of name, aliases on skills
+  for each row execute function catalog_touch('job_skills', 'skill_id');
+
 create function is_admin() returns bool
-language sql stable security definer set search_path = public as $$
-  select exists (select 1 from admins where user_id = auth.uid())
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.admins where user_id = auth.uid())
 $$;
 revoke execute on function is_admin() from public;
 grant execute on function is_admin() to anon, authenticated, service_role;

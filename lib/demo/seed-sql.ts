@@ -33,7 +33,7 @@ export function seedCatalogSql(): string {
     ["prefectures", c.prefectures], ["occupation_groups", c.groups], ["occupations", c.occupations],
     ["skills", c.skills], ["benefits", c.benefits],
   ];
-  return HEADER + "begin;\n" +
+  return HEADER + "-- Chạy một lần trên DB mới; chạy lại sẽ lỗi unique (an toàn, không ghi gì).\nbegin;\n" +
     tables.map(([t, rows]) =>
       insert(t, rows.map(literals)) + `alter table ${t} alter column id restart with ${Math.max(...rows.map((r) => (r as { id: number }).id)) + 1};\n`,
     ).join("\n") +
