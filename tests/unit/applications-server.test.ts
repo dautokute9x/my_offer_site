@@ -15,17 +15,29 @@ const fake = {
   rpc,
   from: () => ({
     select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row && { ...row, created_at: "2026-10-31T23:30:00+00:00" }, error: null }) }) }),
-    update: (patch: Partial<Row>) => ({
-      eq: () => ({ eq: async () => { if (row?.status === "pending_upload") Object.assign(row, patch); return { error: null }; } }),
-    }),
+    update: (patch: Partial<Row>) => {
+      const conds: [string, unknown][] = [];
+      const q = {
+        eq: (c: string, v: unknown) => (conds.push([c, v]), q),
+        select: async () => {
+          const hit = row && conds.every(([c, v]) => (row as Record<string, unknown>)[c] === v);
+          if (hit) Object.assign(row!, patch);
+          return { data: hit ? [{ ref_code: row!.ref_code }] : [], error: null };
+        },
+      };
+      return q;
+    },
   }),
   storage: {
     from: () => ({
       createSignedUploadUrl,
-      remove: async (paths: string[]) => { object = null; return remove(paths); },
-      list: async (dir: string, opts?: { search?: string }) => {
+      remove: async (paths: string[]) => { if (row?.cv_path && paths.includes(row.cv_path)) object = null; return remove(paths); },
+      list: async (dir: string, opts?: { search?: string; limit?: number; offset?: number }) => {
         listed.push(dir);
-        if (!opts?.search) return { data: dirFiles.map((name) => ({ name })), error: null };
+        if (!opts?.search) {
+          const from = opts?.offset ?? 0;
+          return { data: dirFiles.slice(from, from + (opts?.limit ?? 100)).map((name) => ({ name })), error: null };
+        }
         return { data: object && row?.cv_path?.endsWith(opts.search) ? [{ name: opts.search, metadata: { size: object.size } }] : [], error: null };
       },
       download: async () => (onDownload(), object ? { data: new Blob([object.bytes as BlobPart]), error: null } : { data: null, error: { message: "not found" } }),
@@ -90,6 +102,27 @@ describe("completeApplication", () => {
     expect(await completeApplication(ID, "k-1")).toEqual({ refCode: "HS-ABCDEF" });
     expect(remove).not.toHaveBeenCalled();
   });
+  it("gửi lại song song đổi cv_path trong lúc kiểm tra → stale, không đánh dấu new, không xóa", async () => {
+    onDownload = () => { row!.cv_path = `cvs/2026/11/${ID}/moi.pdf`; };
+    expect(await completeApplication(ID, "k-1")).toEqual({ error: "stale" });
+    expect(row!.status).toBe("pending_upload");
+    expect(remove).not.toHaveBeenCalled();
+  });
+  it("complete song song khác đã new trước khi update → trả refCode", async () => {
+    onDownload = () => { row!.status = "new"; };
+    expect(await completeApplication(ID, "k-1")).toEqual({ refCode: "HS-ABCDEF" });
+  });
+  it("thành công → dọn object anh em trong thư mục <id>/, giữ object đã xác nhận", async () => {
+    dirFiles = ["abc.pdf", "cu.docx", "cu2.pdf"];
+    expect(await completeApplication(ID, "k-1")).toEqual({ refCode: "HS-ABCDEF" });
+    expect(remove).toHaveBeenCalledWith([`cvs/2026/11/${ID}/cu.docx`, `cvs/2026/11/${ID}/cu2.pdf`]);
+    expect(object).not.toBeNull();
+  });
+  it("dọn object lỗi → vẫn thành công", async () => {
+    dirFiles = ["abc.pdf", "cu.docx"];
+    remove.mockResolvedValueOnce({ data: null, error: { message: "boom" } } as never);
+    expect(await completeApplication(ID, "k-1")).toEqual({ refCode: "HS-ABCDEF" });
+  });
   it("sai idempotencyKey → not_found", async () => {
     expect(await completeApplication(ID, "khac")).toEqual({ error: "not_found" });
   });
@@ -144,6 +177,12 @@ describe("removeApplicationObjects", () => {
     expect(await removeApplicationObjects(ID)).toEqual({ ok: true });
     expect(listed).toEqual([`cvs/2026/10/${ID}`]);
     expect(remove).toHaveBeenCalledWith([`cvs/2026/10/${ID}/a.pdf`, `cvs/2026/10/${ID}/b.docx`]);
+  });
+  it("phân trang: >100 object đều bị xóa", async () => {
+    dirFiles = Array.from({ length: 150 }, (_, i) => `f${i}.pdf`);
+    expect(await removeApplicationObjects(ID)).toEqual({ ok: true });
+    expect(listed).toEqual([`cvs/2026/10/${ID}`, `cvs/2026/10/${ID}`]);
+    expect(remove.mock.calls.flatMap((c) => c[0])).toHaveLength(150);
   });
   it("thư mục rỗng → không gọi remove", async () => {
     expect(await removeApplicationObjects(ID)).toEqual({ ok: true });

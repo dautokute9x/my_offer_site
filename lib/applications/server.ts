@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { MAX_CV_BYTES, MIME, sniffFileKind, type ApplicationInput } from "@/lib/validate";
 
-export type ApplicationError = "rate_limited" | "job_closed" | "invalid_file" | "not_found" | "server_error";
+export type ApplicationError = "rate_limited" | "job_closed" | "invalid_file" | "not_found" | "stale" | "server_error";
 type Upload = { path: string; token: string; signedUrl: string };
 
 const ERRORS: Record<ApplicationError, [number, string]> = {
@@ -12,13 +12,14 @@ const ERRORS: Record<ApplicationError, [number, string]> = {
   job_closed: [409, "Tin này đã ngừng tuyển."],
   invalid_file: [422, "Tệp CV không hợp lệ hoặc bị lỗi, vui lòng chọn lại tệp PDF/DOC/DOCX/XLS/XLSX."],
   not_found: [404, "Không tìm thấy hồ sơ, vui lòng gửi lại."],
+  stale: [409, "Hồ sơ vừa được cập nhật, vui lòng gửi lại."],
   server_error: [500, "Lỗi máy chủ, vui lòng thử lại."],
 };
 export const errorResponse = (code: ApplicationError) =>
   NextResponse.json({ ok: false, error: code, message: ERRORS[code][1] }, { status: ERRORS[code][0] });
 
 // Không ghi PII vào log: chỉ mã và thông điệp lỗi.
-const fail = (step: string, e: { code?: string; message?: string } | null) => {
+const fail = (step: string, e?: { code?: string; message?: string } | null) => {
   console.error(`[applications] ${step}`, e?.code ?? "", e?.message ?? "");
   return { error: "server_error" as const };
 };
@@ -92,9 +93,44 @@ export async function completeApplication(id: string, idempotencyKey: string): P
     if (re) return fail("remove", re);
     return { error: "invalid_file" };
   }
-  const { error: ue } = await sb.from("applications").update({ status: "new", cv_size: size }).eq("id", id).eq("status", "pending_upload");
+  // Chỉ đánh dấu new nếu dòng vẫn trỏ tới đúng object vừa kiểm tra (gửi lại song song có thể đã đổi cv_path).
+  const { data: upd, error: ue } = await sb.from("applications").update({ status: "new", cv_size: size })
+    .eq("id", id).eq("status", "pending_upload").eq("cv_path", path).select("ref_code");
   if (ue) return fail("update", ue);
+  if (!upd?.length) {
+    const { data: now, error: se } = await sb.from("applications").select("ref_code, status, cv_path, idempotency_key").eq("id", id).maybeSingle();
+    if (se) return fail("select", se);
+    // P1 thành mồ côi, để removeApplicationObjects / lần complete sau dọn.
+    return now?.status === "new" ? { refCode: now.ref_code } : { error: "stale" };
+  }
+  await pruneSiblings(bucket, path.slice(0, slash), path.slice(slash + 1));
   return { refCode: row.ref_code };
+}
+
+type Bucket = ReturnType<ReturnType<typeof createAdminSupabase>["storage"]["from"]>;
+
+async function listAll(bucket: Bucket, dir: string) {
+  const names: string[] = [];
+  for (let offset = 0; ; offset += 100) {
+    const { data, error } = await bucket.list(dir, { limit: 100, offset });
+    if (error) return { error };
+    names.push(...(data ?? []).map((o) => o.name));
+    if ((data?.length ?? 0) < 100) return { names };
+  }
+}
+
+// Sau khi xác nhận: xóa object mồ côi của các lần gửi lại. Best-effort, không ảnh hưởng kết quả thành công.
+async function pruneSiblings(bucket: Bucket, dir: string, keep: string) {
+  try {
+    const r = await listAll(bucket, dir);
+    if ("error" in r) return void fail("prune list", r.error);
+    const extra = r.names.filter((n) => n !== keep).map((n) => `${dir}/${n}`);
+    if (!extra.length) return;
+    const { error } = await bucket.remove(extra);
+    if (error) fail("prune remove", error);
+  } catch (e) {
+    fail("prune", e as Error);
+  }
 }
 
 // Xóa mọi object của hồ sơ (CV hiện tại + path mồ côi của các lần gửi lại). Gọi TRƯỚC khi xóa dòng (cần created_at).
@@ -107,11 +143,10 @@ export async function removeApplicationObjects(id: string): Promise<{ ok: true }
   // Cùng công thức với start_application: cvs/<yyyy>/<mm theo UTC của created_at>/<id>
   const dir = `cvs/${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${id}`;
   const bucket = sb.storage.from("cvs");
-  // shortcut: list mặc định tối đa 100 object; mỗi hồ sơ chỉ có vài lần gửi lại nên đủ.
-  const { data: list, error: le } = await bucket.list(dir);
-  if (le) return fail("list", le);
-  if (list?.length) {
-    const { error: re } = await bucket.remove(list.map((o) => `${dir}/${o.name}`));
+  const r = await listAll(bucket, dir);
+  if ("error" in r) return fail("list", r.error);
+  if (r.names.length) {
+    const { error: re } = await bucket.remove(r.names.map((n) => `${dir}/${n}`));
     if (re) return fail("remove", re);
   }
   return { ok: true };
