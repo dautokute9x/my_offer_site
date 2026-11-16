@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ApplicationForm from "@/components/ApplicationForm";
 import { getSiteSettings } from "@/lib/data";
 import { isPlaceholder } from "@/lib/site-defaults";
 
@@ -29,7 +30,7 @@ export default async function ContactPage() {
       )}
       <section id="tu-van" className="scroll-mt-4 rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-xl font-bold text-navy">Nhận tư vấn</h2>
-        <p className="mt-2">Biểu mẫu nhận tư vấn sẽ được bổ sung.</p>
+        <div className="mt-3"><ApplicationForm kind="consult" jobCode={null} consentVersion={s.consentVersion} retentionMonths={s.retentionMonths} /></div>
       </section>
     </div>
   );

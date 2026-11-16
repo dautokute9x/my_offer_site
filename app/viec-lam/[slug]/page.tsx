@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getCatalog, getJobByCode, getRelatedJobs, getSiteSettings, isDemoMode } from "@/lib/data";
 import { codeFromSlugParam, jobHref } from "@/lib/filters";
 import type { Job } from "@/lib/types";
+import ApplicationForm from "@/components/ApplicationForm";
 import ApplyBar, { ApplyButton } from "@/components/ApplyBar";
 import BackToResults from "@/components/BackToResults";
 import JobCard from "@/components/JobCard";
@@ -39,7 +40,7 @@ export default async function JobPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const poster = sp.xem === "tomtat";
   if (slug !== `${job.slug}-${job.code}`) permanentRedirect(jobHref(job) + (poster ? "?xem=tomtat" : ""));
-  const [catalog, related] = await Promise.all([getCatalog(), getRelatedJobs(job, 4)]);
+  const [catalog, related, settings] = await Promise.all([getCatalog(), getRelatedJobs(job, 4), getSiteSettings()]);
   const closed = isClosed(job);
   const base = jobHref(job);
   const tab = (on: boolean) => `min-h-11 inline-flex items-center rounded-t px-4 font-semibold ${on ? "bg-white text-navy border border-b-0 border-slate-200" : "text-brand"}`;
@@ -80,7 +81,7 @@ export default async function JobPage({ params, searchParams }: Props) {
       {!closed && (
         <section id="ung-tuyen" aria-labelledby="ung-tuyen-h" className="rounded-lg border border-slate-200 bg-white p-4 scroll-mt-4">
           <h2 id="ung-tuyen-h" className="text-lg font-bold text-navy">Ứng tuyển</h2>
-          <p>Biểu mẫu ứng tuyển sẽ sớm có tại đây.</p>
+          <ApplicationForm kind="apply" jobCode={job.code} jobTitle={job.titleVi} consentVersion={settings.consentVersion} retentionMonths={settings.retentionMonths} />
         </section>
       )}
       {related.length > 0 && (
