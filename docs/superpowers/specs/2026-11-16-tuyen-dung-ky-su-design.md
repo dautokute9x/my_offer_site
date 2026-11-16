@@ -1,6 +1,6 @@
 # Thiết kế: Website tuyển dụng kỹ sư tại Nhật cho người Việt
 
-Ngày: 2026-11-16 · Trạng thái: chờ duyệt
+Ngày: 2026-11-16 · Trạng thái: chờ duyệt (đã qua rà soát)
 
 ## 1. Mục đích
 
@@ -80,7 +80,7 @@ lib/
   validate.ts, csv.ts     kiểm tra dữ liệu form; đọc CSV và kiểm tra theo dòng
   supabase/               client server/browser; client service role chỉ dùng ở server
 supabase/migrations/      schema, RLS, hàm search_jobs, bucket cvs
-supabase/seed.sql         danh mục và tin demo
+supabase/seed_catalog.sql danh mục; seed_demo.sql tin demo (tùy chọn)
 tests/                    vitest (unit, so khớp hai nguồn), playwright (e2e), rls.sql
 ```
 
@@ -94,7 +94,13 @@ tests/                    vitest (unit, so khớp hai nguồn), playwright (e2e)
 **Danh mục**
 
 - `prefectures`: `id`, `code` (JIS 01–47), `name_ja` (東京都), `name_vi`, `romaji` (Tokyo), `aliases text[]` (東京, tokyo-to…).
-- `occupation_groups`: 5 nhóm nghề như trong yêu cầu, mỗi nhóm có `name_vi`, `name_ja`, `sort`.
+- `occupation_groups`: 5 nhóm theo yêu cầu của chủ dự án, mỗi nhóm có `name_vi`, `name_ja`, `sort`:
+  1. Điện và thiết kế điện (電気・電気設計)
+  2. Xây dựng, dân dụng, cầu đường (建築・土木)
+  3. Quản lý thi công (施工管理)
+  4. CAD/BIM, cơ khí và thiết kế (CAD/BIM・機械・設計)
+  5. Sản xuất, bảo trì, vận hành máy (製造・保全・機械オペレーター)
+- Các nghề cụ thể trong từng nhóm do người lập trình đề xuất (3–6 nghề/nhóm, ví dụ 電気工事, 電気設備設計, PLC/回路設計, 土木施工, 舗装工, 建築施工管理, 管工事施工管理, CAD オペレーター, BIM, 機械設計, 設備保全, 機械オペレーター). Quản trị viên sửa được.
 - `occupations`: `group_id`, `name_vi`, `name_ja`, `aliases`. Mỗi nghề là một dòng. Không tạo danh mục mới từ chuỗi ghép nhiều nghề.
 - `skills`: `name`, `aliases` (AutoCAD, Revit, Tekla, SolidWorks, PLC…).
 - `benefits`: `slug`, `name_vi`, `name_ja`, `sort`, `featured` (được ưu tiên hiện trên thẻ).
@@ -105,7 +111,7 @@ tests/                    vitest (unit, so khớp hai nguồn), playwright (e2e)
 | Nhóm | Cột |
 |---|---|
 | Định danh | `id uuid`, `code text unique` (giữ nguyên số 0 ở đầu, regex `^[A-Za-z0-9]{1,20}$`), `slug` |
-| Trạng thái | `status`: `draft` \| `published` \| `closed`; `published_at`, `updated_at`, `valid_through` (tùy chọn) |
+| Trạng thái | `status`: `draft` \| `published` \| `closed`; `published_at`, `updated_at`, `valid_through` (tùy chọn); `is_demo bool` |
 | Tiêu đề | `title_vi`, `title_ja` |
 | Nhà tuyển dụng | `employer_name` (tùy chọn; chỉ hiển thị khi quản trị viên điền) |
 | Địa điểm | `location_detail_ja` (ví dụ 兵庫県神戸市兵庫区) + bảng nối `job_prefectures` |
@@ -117,6 +123,7 @@ tests/                    vitest (unit, so khớp hai nguồn), playwright (e2e)
 | Tìm kiếm | `search_text` (trigger điền: chuỗi chuẩn hóa từ code, tiêu đề, tên/alias của tỉnh, nghề, kỹ năng) |
 
 - `job_benefits(job_id, benefit_id, value bool)`: `true` = có, `false` = không, không có dòng = chưa xác nhận.
+- `is_demo = true`: tin hiển thị nhãn "Dữ liệu minh họa", có `noindex`, không vào sitemap, không xuất JobPosting. Quản trị viên có nút "Xóa toàn bộ tin demo" trước khi chạy thật.
 - Lương lưu bằng yên. Thu nhập năm hiển thị theo 万円 ("350–441 万円/năm"). Cột thiếu thì hiển thị "Chưa xác nhận".
 - `salary_needs_review` được bật khi nhập CSV mà:
   - min > max, hoặc
@@ -158,7 +165,7 @@ tests/                    vitest (unit, so khớp hai nguồn), playwright (e2e)
 **Hàm `search_jobs(params jsonb)`** (SQL, stable) — trả về các tin trong trang hiện tại kèm `total`.
 
 - Từ khóa:
-  - Chuẩn hóa NFKC, chữ thường, gộp khoảng trắng, bỏ `#` ở đầu.
+  - Chuẩn hóa NFKC, chữ thường, gộp khoảng trắng, bỏ `#` ở đầu, **bỏ dấu tiếng Việt** (đ→d) để "ky su dien" tìm được "kỹ sư điện". Một hàm SQL `norm_text()` (dùng `normalize` + `unaccent`) và một hàm TypeScript `normText()` làm cùng phép biến đổi; test so khớp kiểm tra hai bên cho cùng kết quả.
   - Chia thành các từ; tin phải chứa đủ tất cả các từ (AND), so bằng `ILIKE` trên `search_text`, có index `pg_trgm`.
   - Nếu chuỗi nhập trùng khớp một mã tin thì tin đó lên đầu.
 - Bộ lọc:
@@ -168,6 +175,9 @@ tests/                    vitest (unit, so khớp hai nguồn), playwright (e2e)
   - Tiếng Nhật: chọn mức tối đa ứng viên đạt được; tin yêu cầu cao hơn bị loại.
   - Kinh nghiệm tối đa.
   - Quyền lợi: tin phải có tất cả quyền lợi đã chọn (`value = true`).
+  - Giá trị thiếu (quyết định của người lập trình): tin có `jp_level` hoặc `experience_years_min` "chưa xác nhận" **vẫn hiện** khi lọc theo các tiêu chí này. Chỉ loại tin đã biết là yêu cầu cao hơn. `none` (không yêu cầu) là mức thấp nhất.
+  - Lương: tin đạt khi khoảng lương của tin giao với khoảng người dùng chọn. Nếu tin chỉ có một đầu thì đầu đó được dùng cho cả min và max. Tin không có lương của kỳ đã chọn bị loại.
+  - Danh sách `/viec-lam`, số đếm nhóm nghề ở trang chủ và "việc làm liên quan" **chỉ gồm tin đang tuyển**. Tin đã đóng hoặc quá hạn chỉ mở được bằng link trực tiếp.
   - "Có lịch sắp tới".
 - Sắp xếp: `updated` (mặc định), `interview` (lịch gần nhất), `salary_month` hoặc `salary_year` (giá trị null xếp cuối). Thứ tự ổn định nhờ sắp phụ theo `code`.
 
@@ -319,6 +329,8 @@ Có công tắc "Danh sách / Poster". Chế độ poster là lưới thẻ lớ
   5. Chỉ bấm "Nhập" được khi không còn lỗi.
   6. Nhập toàn bộ trong một transaction bằng RPC `import_jobs(jsonb)`; có lỗi thì không dòng nào được ghi.
   7. Cột tỉnh và nghề nhận nhiều giá trị, phân tách bằng `|`.
+  8. Định dạng (chủ dự án chọn **mẫu CSV mới**, không đọc định dạng cũ kiểu "350 > 441"). Cột: `code`, `status`, `title_vi`, `title_ja`, `employer_name`, `prefectures`, `location_detail_ja`, `occupations`, `skills`, `monthly_min_yen`, `monthly_max_yen`, `annual_min_man`, `annual_max_man` (万円, server đổi sang yên), `salary_negotiable` (co/khong/trống), `salary_source_text`, `jp_level`, `experience_years_min`, các cặp nội dung `*_ja`/`*_vi`, `translation_status`, `benefits_yes`, `benefits_no` (slug, phân tách `|`; quyền lợi không ghi = chưa xác nhận), `driver_license_required`, `company_car_provided`, `interviews` (`YYYY-MM-DD HH:mm` theo giờ JST, phân tách `|`), `valid_through`.
+  9. Khi cập nhật theo `code` (quyết định của người lập trình): các trường và danh sách tỉnh/nghề/kỹ năng/quyền lợi được **thay thế** bằng giá trị trong file. Lịch phỏng vấn chỉ được **thêm** (bỏ qua lịch trùng giờ), không bao giờ bị xóa qua CSV.
 
 ## 10. SEO
 
@@ -343,7 +355,7 @@ Có công tắc "Danh sách / Poster". Chế độ poster là lưới thẻ lớ
 - Lịch tính tương đối từ "hôm nay theo JST": +2, +5, +9 ngày… lúc 10:00 JST.
 - Tìm không ra kết quả: thử với chuỗi bất kỳ.
 - Tải lỗi: `?demo_error=1` khiến lớp dữ liệu demo ném lỗi (chỉ ở chế độ demo) để xem `error.tsx`.
-- `supabase/seed.sql` chứa danh mục và các tin demo tương tự. Ngày lịch dùng `now() at time zone 'Asia/Tokyo'` cộng thêm khoảng thời gian.
+- `supabase/seed_catalog.sql` (tỉnh, nhóm nghề, nghề, kỹ năng, quyền lợi) dùng cho cả môi trường thật. `supabase/seed_demo.sql` (tin demo, `is_demo = true`) là tùy chọn, chỉ để thử. Ngày lịch dùng `now() at time zone 'Asia/Tokyo'` cộng thêm khoảng thời gian.
 
 ## 12. Kiểm thử và tiêu chí hoàn thành
 
