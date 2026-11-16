@@ -26,6 +26,15 @@ describe("normalizeJobInput", () => {
     const r = normalizeJobInput({ ...base }, demoCatalog, { salaryUnparseable: true });
     expect("errors" in r ? null : r.job.salary_needs_review).toBe(true);
   });
+  it("hạn tuyển: ngày không tồn tại → lỗi, không ném", () => {
+    expect(errs({ validThrough: "2026-13-45" }).validThrough).toBeTruthy();
+    expect(errs({ validThrough: "2026-02-30" }).validThrough).toBeTruthy();
+    expect(ok({ validThrough: "2026-11-20" }).job.valid_through).toBe("2026-11-20T14:59:00.000Z");
+  });
+  it("dấu phẩy thập phân: 21,55 → 215500; năm min > max chặn", () => {
+    expect(ok({ monthlyMinMan: "21,55" }).job.monthly_min_yen).toBe(215_500);
+    expect(errs({ annualMinMan: "301", annualMaxMan: "300" }).annualMaxMan).toBeTruthy();
+  });
   it("slug tự sinh", () => {
     expect(generateSlug("Kỹ sư điện (Tokyo)")).toBe("ky-su-dien-tokyo");
     expect(ok({ titleVi: "Kỹ sư điện (Tokyo)" }).job.slug).toBe("ky-su-dien-tokyo");

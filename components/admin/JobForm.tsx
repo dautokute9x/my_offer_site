@@ -21,10 +21,12 @@ export default function JobForm({ catalog, initial, id, sourceChanged }: { catal
   const err = (k: string) => e[k] && <p id={`e-${k}`} role="alert" className="text-sm text-red-700">{e[k]}</p>;
   const aria = (k: string) => (e[k] ? { "aria-invalid": true as const, "aria-describedby": `e-${k}` } : {});
   const field = (k: string, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
-    <label className="block text-sm font-semibold">{label}
-      <input name={k} defaultValue={s(k)} className={input} {...aria(k)} {...extra} />
+    <div>
+      <label className="block text-sm font-semibold">{label}
+        <input name={k} defaultValue={s(k)} className={input} {...aria(k)} {...extra} />
+      </label>
       {err(k)}
-    </label>
+    </div>
   );
   const tri = (k: string, label: string) => (
     <label className="block text-sm font-semibold">{label}
@@ -59,8 +61,8 @@ export default function JobForm({ catalog, initial, id, sourceChanged }: { catal
           <select name="status" defaultValue={s("status") || "draft"} className={input} {...aria("status")}>
             <option value="draft">Nháp</option><option value="published">Đang đăng</option><option value="closed">Đã đóng</option>
           </select>
-          {err("status")}
         </label>
+        {err("status")}
         {field("validThrough", "Hạn tuyển (JST)", { type: "date" })}
       </div>
       {checks("prefectureIds", "Tỉnh (bắt buộc)", catalog.prefectures.map((p) => ({ id: p.id, label: p.nameVi })))}

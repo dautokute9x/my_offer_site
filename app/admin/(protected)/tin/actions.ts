@@ -15,7 +15,8 @@ function revalidateJob(job?: { slug: string; code: string } | null) {
   if (job) revalidatePath(jobHref(job));
 }
 
-const idOf = (v: unknown) => (/^\d{1,15}$/.test(String(v ?? "")) ? Number(v) : null);
+const idOf = (v: unknown) => (/^\d{1,15}$/.test(String(v ?? "")) && Number(v) > 0 ? Number(v) : null);
+const need = (v: unknown) => idOf(v) ?? (() => { throw new Error("Mã không hợp lệ."); })();
 
 export async function saveJob(_prev: FormState, fd: FormData): Promise<FormState> {
   const rawId = String(fd.get("id") ?? "");
@@ -26,6 +27,7 @@ export async function saveJob(_prev: FormState, fd: FormData): Promise<FormState
   const r = normalizeJobInput(raw, await getCatalog());
   if ("errors" in r) return { errors: r.errors, values: raw, nonce: Date.now() };
   const sb = await createServerSupabase();
+  const old = id != null ? (await sb.from("jobs").select("slug, code").eq("id", id).maybeSingle()).data : null;
   const { data, error } = await sb.rpc("admin_save_job", {
     p: { id, job: r.job, prefectureIds: r.prefectureIds, occupationIds: r.occupationIds, skillIds: r.skillIds, benefits: r.benefits, ackTranslation: fd.get("ackTranslation") === "1" },
   });
@@ -34,12 +36,14 @@ export async function saveJob(_prev: FormState, fd: FormData): Promise<FormState
     const errors: Errors = error.code === "23505" ? { code: "Mã tin đã tồn tại." } : { form: "Không lưu được tin. Thử lại hoặc báo quản trị viên." };
     return { errors, values: raw, nonce: Date.now() };
   }
+  revalidateJob(old);
   revalidateJob({ slug: String(r.job.slug), code: String(r.job.code) });
   redirect(`/admin/tin/${data}?da-luu=1`);
 }
 
-export async function setJobStatus(id: number, status: "published" | "closed" | "draft") {
-  await requireAdmin(`/admin/tin/${id}`);
+export async function setJobStatus(rawId: number, status: "published" | "closed" | "draft") {
+  await requireAdmin(`/admin/tin/${rawId}`);
+  const id = need(rawId);
   if (!["published", "closed", "draft"].includes(status)) throw new Error("Trạng thái không hợp lệ");
   const sb = await createServerSupabase();
   const { data: job, error: e1 } = await sb.from("jobs").select("slug, code, published_at").eq("id", id).maybeSingle();
@@ -58,8 +62,9 @@ async function interviewJob(jobId: number) {
   return { sb, job: data };
 }
 
-export async function saveInterview(jobId: number, fd: FormData) {
-  await requireAdmin(`/admin/tin/${jobId}`);
+export async function saveInterview(rawJobId: number, fd: FormData) {
+  await requireAdmin(`/admin/tin/${rawJobId}`);
+  const jobId = need(rawJobId);
   const date = String(fd.get("date") ?? ""), time = String(fd.get("time") ?? "");
   const fmt = String(fd.get("format") ?? "unknown");
   const bad = !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time) || !["online", "onsite", "unknown"].includes(fmt);
@@ -75,8 +80,9 @@ export async function saveInterview(jobId: number, fd: FormData) {
   redirect(`/admin/tin/${jobId}?da-luu=1`);
 }
 
-export async function cancelInterview(jobId: number, eventId: number) {
-  await requireAdmin(`/admin/tin/${jobId}`);
+export async function cancelInterview(rawJobId: number, rawEventId: number) {
+  await requireAdmin(`/admin/tin/${rawJobId}`);
+  const jobId = need(rawJobId), eventId = need(rawEventId);
   const { sb, job } = await interviewJob(jobId);
   const { error } = await sb.from("interview_events").update({ status: "cancelled" }).eq("id", eventId).eq("job_id", jobId);
   if (error) { console.error("[admin/cancelInterview]", error.code, error.message); throw new Error("Không hủy được lịch"); }
@@ -84,8 +90,9 @@ export async function cancelInterview(jobId: number, eventId: number) {
   redirect(`/admin/tin/${jobId}?da-luu=1`);
 }
 
-export async function deleteInterview(jobId: number, eventId: number) {
-  await requireAdmin(`/admin/tin/${jobId}`);
+export async function deleteInterview(rawJobId: number, rawEventId: number) {
+  await requireAdmin(`/admin/tin/${rawJobId}`);
+  const jobId = need(rawJobId), eventId = need(rawEventId);
   const { sb, job } = await interviewJob(jobId);
   const { error } = await sb.from("interview_events").delete().eq("id", eventId).eq("job_id", jobId);
   if (error) { console.error("[admin/deleteInterview]", error.code, error.message); throw new Error("Không xóa được lịch"); }
