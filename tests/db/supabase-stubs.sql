@@ -1,10 +1,13 @@
 -- Giả lập phần nền của Supabase (role, auth, storage) để test migration/RLS bằng psql.
-create extension if not exists pg_trgm;
-create extension if not exists unaccent;
-
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
+
+-- Như Supabase: extension nằm ở schema `extensions`.
+create schema extensions;
+grant usage on schema extensions to anon, authenticated, service_role;
+create extension pg_trgm schema extensions;
+create extension unaccent schema extensions;
 
 grant usage on schema public to anon, authenticated, service_role;
 -- Supabase cấp ALL trên mọi bảng/hàm/sequence public và dựa vào RLS để chặn.

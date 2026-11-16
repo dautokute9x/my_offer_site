@@ -10,7 +10,7 @@ export async function createServerSupabase() {
     {
       cookies: {
         getAll: () => store.getAll(),
-        setAll(list) {
+        setAll(list) { // bỏ qua headers cache: Server Component không đặt được header phản hồi; proxy.ts đặt chúng cho /admin
           try {
             list.forEach(({ name, value, options }) => store.set(name, value, options));
           } catch {
