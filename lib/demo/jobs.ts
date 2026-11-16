@@ -1,5 +1,5 @@
 import type { ContentField, InterviewEvent, Job } from "@/lib/types";
-import { jstDateKey, jstToIso } from "@/lib/time";
+import { jstDateKey, jstToIso } from "../time.ts";
 
 const DAY = 86_400_000;
 const FIELDS: ContentField[] = ["summary", "description", "requirements", "workingHours", "holidays", "overtime", "benefitsNote"];

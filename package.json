@@ -10,7 +10,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "db:test": "bash scripts/db-local.sh reset && for f in tests/db/*.sql; do case $f in *supabase-stubs.sql) continue;; esac; bash scripts/db-local.sh psql -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done",
-    "db:seed": "bash scripts/db-local.sh reset"
+    "db:seed": "bash scripts/db-local.sh reset",
+    "db:gen-seed": "node --experimental-strip-types scripts/gen-seed.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
