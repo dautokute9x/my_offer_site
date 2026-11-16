@@ -62,3 +62,5 @@ export function hasActiveFilters(f: JobFilters): boolean {
   return !!(f.q || f.prefectures.length || f.groups.length || f.occupations.length || f.salaryMinMan != null ||
     f.salaryMaxMan != null || f.jpLevel || f.maxExperience != null || f.benefits.length || f.hasInterview);
 }
+
+export const jobHref = (job: Pick<Job, "slug" | "code">) => `/viec-lam/${job.slug}-${job.code}`;
