@@ -11,7 +11,7 @@ export default function JobDetailPoster({ job, catalog, interviews }: { job: Job
   return (
     <div className="space-y-3 rounded-lg border-2 border-navy bg-white p-6 text-lg">
       <p className="font-bold text-navy">📍 {places.join(", ") || UNCONFIRMED}</p>
-      <p>💴 {[monthly && `Tháng ${monthly}`, annual && `Năm ${annual}`].filter(Boolean).join(" · ") || `Lương: ${UNCONFIRMED}`}</p>
+      <p>💴 {[monthly, annual].filter(Boolean).join(" · ") || `Lương: ${UNCONFIRMED}`}</p>
       <p>🈂 {level} · {job.experienceYearsMin == null ? `Kinh nghiệm: ${UNCONFIRMED}` : `≥${job.experienceYearsMin} năm`}</p>
       {job.content.summary.ja || job.content.summary.vi ? <BilingualBlock text={job.content.summary} status={job.translationStatus} /> : null}
       {perks.length > 0 && (

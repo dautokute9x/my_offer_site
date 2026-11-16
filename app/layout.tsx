@@ -4,7 +4,7 @@ import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DemoBanner from "@/components/DemoBanner";
-import { siteDefaults } from "@/lib/site-defaults";
+import { getSiteSettings } from "@/lib/data";
 
 const beVietnam = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
@@ -17,11 +17,14 @@ const notoJp = Noto_Sans_JP({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: { default: siteDefaults.brandName, template: `%s | ${siteDefaults.brandName}` },
-  description: "Việc làm kỹ sư tại Nhật Bản dành cho người Việt.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { brandName } = await getSiteSettings();
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+    title: { default: brandName, template: `%s | ${brandName}` },
+    description: "Việc làm kỹ sư tại Nhật Bản dành cho người Việt.",
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -3,6 +3,7 @@ import JobCard from "@/components/JobCard";
 import { countOpenJobsByGroup, getCatalog, getSiteSettings, listUpcomingInterviews, searchJobs } from "@/lib/data";
 import { jobHref, parseFilters } from "@/lib/filters";
 import { formatJst } from "@/lib/time";
+import { isPlaceholder } from "@/lib/site-defaults";
 
 export const dynamic = "force-dynamic"; // lịch phỏng vấn phụ thuộc thời điểm hiện tại
 
@@ -30,10 +31,10 @@ export default async function Home() {
         <h1 className="text-3xl font-bold">Tìm việc và chuyển việc kỹ sư tại Nhật cho người Việt</h1>
         <form action="/viec-lam" method="get" className="mt-5 flex flex-wrap items-end gap-2">
           <label className="min-w-0 flex-1 basis-56 text-sm font-semibold">Từ khóa
-            <input name="q" type="search" placeholder="Mã tin, chức danh, kỹ năng…" className="mt-1 min-h-11 w-full rounded bg-white px-3 font-normal text-slate-900" />
+            <input name="q" type="search" placeholder="Mã tin, chức danh, kỹ năng…" className="mt-1 min-h-11 w-full rounded bg-white px-3 font-normal text-slate-900 focus-visible:outline-white" />
           </label>
           <label className="min-w-0 flex-1 basis-56 text-sm font-semibold">Nhóm nghề
-            <select name="nhom" defaultValue="" className="mt-1 min-h-11 w-full rounded bg-white px-2 font-normal text-slate-900">
+            <select name="nhom" defaultValue="" className="mt-1 min-h-11 w-full rounded bg-white px-2 font-normal text-slate-900 focus-visible:outline-white">
               <option value="">Tất cả nhóm nghề</option>
               {catalog.groups.map((g) => <option key={g.slug} value={g.slug}>{g.nameVi}</option>)}
             </select>
@@ -93,7 +94,7 @@ export default async function Home() {
 
       <section aria-labelledby="gt" className="max-w-3xl">
         <h2 id="gt" className={h2}>Giới thiệu</h2>
-        <p>{s.brandName} giúp kỹ sư người Việt tìm hiểu tin tuyển dụng tại Nhật Bản và được tư vấn trước khi ứng tuyển.</p>
+        <p>{isPlaceholder(s.aboutText) ? `${s.brandName} giúp kỹ sư người Việt tìm hiểu tin tuyển dụng tại Nhật Bản và được tư vấn trước khi ứng tuyển.` : s.aboutText.split(/\n\s*\n/)[0]}</p>
         <Link href="/gioi-thieu" className="mt-2 inline-flex min-h-11 items-center font-semibold text-brand underline">Tìm hiểu thêm</Link>
       </section>
 

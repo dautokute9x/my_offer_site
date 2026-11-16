@@ -74,3 +74,10 @@ test("?trang=abc → không lỗi", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Việc làm kỹ sư tại Nhật" })).toBeVisible();
   await expect(page.locator("article").first()).toBeVisible();
 });
+
+test("lương trên thẻ không có tiền tố 'Tháng'/'Năm' thừa", async ({ page }) => {
+  await page.goto("/viec-lam");
+  const txt = (await page.locator("article").allInnerTexts()).join("\n");
+  expect(txt).toMatch(/万円\/tháng/);
+  expect(txt).not.toMatch(/(Tháng|Năm) (Từ|Đến|\d)/);
+});

@@ -1,4 +1,3 @@
-"use client";
 import TimezoneToggle from "@/components/TimezoneToggle";
 import { formatJst, formatVn } from "@/lib/time";
 import type { InterviewEvent } from "@/lib/types";

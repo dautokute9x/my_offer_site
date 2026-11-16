@@ -3,6 +3,7 @@ export function normText(s: string): string {
     .normalize("NFKC")
     .toLowerCase()
     .normalize("NFD")
+    // Chỉ dải dấu tổ hợp La-tinh; không mở rộng sang \p{M} (sẽ làm mất dakuten của kana).
     .replace(/[̀-ͯ]/g, "")
     .replace(/đ/g, "d")
     .replace(/\s+/g, " ")

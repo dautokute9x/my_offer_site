@@ -85,7 +85,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
   return (
     <>
     <p ref={statusRef} tabIndex={-1} role="status" className={done ? "rounded bg-green-50 px-4 py-3 font-semibold text-green-900" : undefined}>{done}</p>
-    {!done && <form ref={formRef} onSubmit={onSubmit} noValidate aria-busy={submitting} className="space-y-4">
+    {!done && <form ref={formRef} onSubmit={onSubmit} method="post" action="/api/applications/start" encType="multipart/form-data" noValidate aria-busy={submitting} className="space-y-4">
       {general && <p role="alert" className="rounded bg-red-50 px-4 py-3 font-semibold text-red-900">{general}</p>}
       {errors.contact && <p id="e-contact" role="alert" className="rounded bg-red-50 px-4 py-3 font-semibold text-red-900">{errors.contact}</p>}
       {errors.kind && <p role="alert" className="font-semibold text-red-900">{errors.kind}</p>}
@@ -112,7 +112,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
       <div>
         <label className="flex items-start gap-2">
           <input type="checkbox" name="consent" aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? "e-consent" : undefined} className="mt-1 size-5" />
-          <span>Tôi đồng ý để xử lý thông tin cá nhân nhằm mục đích tuyển dụng và tư vấn, lưu tối đa {retentionMonths} tháng. Xem <a href="/chinh-sach-bao-mat" className="font-semibold text-brand underline">Chính sách bảo mật</a>.</span>
+          <span>Tôi đồng ý để xử lý thông tin cá nhân nhằm mục đích tuyển dụng và tư vấn, lưu tối đa {retentionMonths} tháng. Xem <a href="/chinh-sach-bao-mat" target="_blank" rel="noopener" className="font-semibold text-brand underline">Chính sách bảo mật (mở tab mới)</a>.</span>
         </label>
         {errors.consent && <p id="e-consent" className="mt-1 text-sm font-semibold text-red-800">{errors.consent}</p>}
       </div>

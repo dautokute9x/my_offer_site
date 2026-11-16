@@ -1,14 +1,10 @@
 import Link from "next/link";
-import { isPlaceholder, siteDefaults as s } from "@/lib/site-defaults";
+import { getSiteSettings } from "@/lib/data";
+import { contactLinks } from "@/lib/contact";
 
-export default function SiteFooter() {
-  const items = [
-    { label: "Email", value: s.email, href: `mailto:${s.email}` },
-    { label: "Điện thoại", value: s.phone, href: `tel:${s.phone}` },
-    { label: "Zalo", value: s.zalo, href: undefined },
-    { label: "Facebook", value: s.facebookUrl, href: s.facebookUrl },
-    { label: "Nhóm Zalo", value: s.zaloGroupUrl, href: s.zaloGroupUrl },
-  ].filter((i) => !isPlaceholder(i.value));
+export default async function SiteFooter() {
+  const s = await getSiteSettings();
+  const items = contactLinks(s);
   return (
     <footer className="bg-navy text-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:justify-between">
@@ -20,10 +16,10 @@ export default function SiteFooter() {
                 {i.label}:{" "}
                 {i.href ? (
                   <a href={i.href} className="underline">
-                    {i.value}
+                    {i.text}
                   </a>
                 ) : (
-                  i.value
+                  i.text
                 )}
               </li>
             ))}

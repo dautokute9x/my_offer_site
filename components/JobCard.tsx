@@ -11,7 +11,7 @@ const dmy = (iso: string) => {
 
 export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Catalog }) {
   const { monthly, annual } = salaryLines(job);
-  const salary = [monthly && `Tháng ${monthly}`, annual && `Năm ${annual}`].filter(Boolean).join(" · ");
+  const salary = [monthly, annual].filter(Boolean).join(" · ");
   const places = catalog.prefectures.filter((p) => job.prefectureIds.includes(p.id)).map((p) => p.nameVi);
   const perks = catalog.benefits.filter((b) => b.featured && job.benefits[b.slug] === true).slice(0, 3);
   const exp = job.experienceYearsMin;

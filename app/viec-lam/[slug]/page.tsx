@@ -45,12 +45,12 @@ export default async function JobPage({ params, searchParams }: Props) {
   const base = jobHref(job);
   const tab = (on: boolean) => `min-h-11 inline-flex items-center rounded-t px-4 font-semibold ${on ? "bg-white text-navy border border-b-0 border-slate-200" : "text-brand"}`;
   const places = catalog.prefectures.filter((p) => job.prefectureIds.includes(p.id));
-  const jsonLd = !isDemoMode() && !job.isDemo && job.employerName && places.length && description(job) && {
+  const jsonLd = !isDemoMode() && !job.isDemo && job.employerName && places.length && description(job) && job.publishedAt && (!closed || job.validThrough) && {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: job.titleVi,
     description: description(job),
-    datePosted: job.publishedAt ?? undefined,
+    datePosted: job.publishedAt,
     validThrough: job.validThrough ?? undefined,
     hiringOrganization: { "@type": "Organization", name: job.employerName },
     jobLocation: places.map((p) => ({ "@type": "Place", address: { "@type": "PostalAddress", addressRegion: p.nameJa, addressCountry: "JP" } })),

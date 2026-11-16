@@ -1,6 +1,6 @@
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
-import { siteDefaults } from "@/lib/site-defaults";
+import { getSiteSettings } from "@/lib/data";
 
 const nav = [
   { href: "/viec-lam", label: "Việc làm" },
@@ -10,12 +10,13 @@ const nav = [
 ];
 const cta = "inline-flex min-h-11 items-center rounded bg-brand px-4 font-semibold text-white";
 
-export default function SiteHeader() {
+export default async function SiteHeader() {
+  const { brandName } = await getSiteSettings();
   return (
     <header className="bg-white border-b border-slate-200">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2">
         <Link href="/" className="text-lg font-bold text-navy">
-          {siteDefaults.brandName}
+          {brandName}
         </Link>
         <nav aria-label="Menu chính" className="hidden items-center gap-5 md:flex">
           {nav.map((n) => (

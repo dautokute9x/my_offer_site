@@ -31,8 +31,7 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
   const count = [f.prefectures, f.groups, f.occupations, f.benefits].reduce((n, a) => n + a.length, 0) +
     [f.salaryMinMan != null || f.salaryMaxMan != null, f.jpLevel, f.maxExperience != null, f.hasInterview].filter(Boolean).length;
   const num = (s: string) => (/^\d{1,6}$/.test(s.trim()) ? Number(s) : null);
-  const salary = (e: React.FocusEvent<HTMLInputElement>) => {
-    const form = e.currentTarget.form!;
+  const salary = (form: HTMLFormElement) => {
     const v = (n: string) => num((form.elements.namedItem(n) as HTMLInputElement).value);
     const [min, max] = [v("min"), v("max")];
     if (min !== f.salaryMinMan || max !== f.salaryMaxMan) go({ salaryMinMan: min, salaryMaxMan: max });
@@ -49,7 +48,7 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
       </button>
       <dialog ref={dialog} aria-labelledby="filter-title"
         className="m-0 h-full max-h-none w-full max-w-none bg-white p-0 backdrop:bg-black/40 lg:static lg:block lg:h-auto lg:rounded-lg lg:border lg:border-slate-200">
-        <form onSubmit={(e) => e.preventDefault()} className="flex h-full flex-col">
+        <form onSubmit={(e) => { e.preventDefault(); salary(e.currentTarget); }} className="flex h-full flex-col">
           <div className="flex items-center justify-between p-4 pb-2">
             <h2 id="filter-title" ref={title} tabIndex={-1} className="text-lg font-bold text-navy">Bộ lọc</h2>
             <button type="button" onClick={() => dialog.current?.close()} className="min-h-11 px-3 text-sm lg:hidden">Đóng</button>
@@ -86,11 +85,11 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
               <div className="mt-1 flex gap-2">
                 <label className="flex-1 text-sm">Từ
                   <input name="min" type="number" min={0} inputMode="numeric" key={`a${f.salaryMinMan}`}
-                    defaultValue={f.salaryMinMan ?? ""} onBlur={salary} className={field} />
+                    defaultValue={f.salaryMinMan ?? ""} onBlur={(e) => salary(e.currentTarget.form!)} className={field} />
                 </label>
                 <label className="flex-1 text-sm">Đến
                   <input name="max" type="number" min={0} inputMode="numeric" key={`b${f.salaryMaxMan}`}
-                    defaultValue={f.salaryMaxMan ?? ""} onBlur={salary} className={field} />
+                    defaultValue={f.salaryMaxMan ?? ""} onBlur={(e) => salary(e.currentTarget.form!)} className={field} />
                 </label>
               </div>
             </fieldset>
