@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0f2747;
+  --color-brand: #176ac0;
+  --color-bg: #f5f7fb;
+  --color-ok: #166534;
+  --color-warn: #b45309;
+  --font-sans: var(--font-be-vietnam), var(--font-noto-jp), system-ui,
+    "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+body {
+  background: var(--color-bg);
+  color: #1a2233;
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid #176ac0;
+  outline-offset: 2px;
+}
