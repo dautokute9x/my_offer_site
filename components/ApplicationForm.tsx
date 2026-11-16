@@ -1,5 +1,6 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { isSuccess } from "@/lib/application-response";
 import { ALLOWED_EXT, MAX_CV_BYTES, validateApplication, type ApplicationInput } from "@/lib/validate";
 
 const LEVELS: [string, string][] = [["", "Chưa chọn"], ["N1", "N1"], ["N2", "N2"], ["N3", "N3"], ["N4", "N4"], ["N5", "N5"], ["none", "Chưa có/Không"]];
@@ -17,7 +18,16 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
   const submittingRef = useRef(false);
   const keyRef = useRef<string>("");
   const formRef = useRef<HTMLFormElement>(null);
-  keyRef.current ||= typeof crypto !== "undefined" ? crypto.randomUUID() : String(Math.random());
+  // randomUUID chỉ có trên ngữ cảnh an toàn (https/localhost); LAN http cần phương án dự phòng.
+  keyRef.current ||= globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (done) statusRef.current?.focus(); }, [done]);
+  const visible = (k: string) => k === "contact" || k === "kind" || (k === "file" ? apply : FIELDS.includes(k));
+  const focusFirst = (errs: Record<string, string>) => {
+    const first = [...FIELDS, "contact"].find((k) => errs[k] && visible(k));
+    const target = first === "contact" ? "email" : first;
+    formRef.current?.querySelector<HTMLElement>(`[name="${target === "file" ? "cv" : target}"]`)?.focus();
+  };
   const apply = kind === "apply";
 
   async function onSubmit(ev: React.FormEvent<HTMLFormElement>) {
@@ -41,9 +51,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
     setGeneral("");
     setErrors(errs);
     if (Object.keys(errs).length) {
-      const first = [...FIELDS, "contact"].find((k) => errs[k]);
-      const target = first === "contact" ? "email" : first;
-      formRef.current?.querySelector<HTMLElement>(`[name="${target === "file" ? "cv" : target}"]`)?.focus();
+      focusFirst(errs);
       return;
     }
     submittingRef.current = true;
@@ -51,9 +59,13 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
     try {
       const res = await fetch("/api/applications/start", { method: "POST", body: fd });
       const data = await res.json().catch(() => null);
-      if (res.ok && data?.ok === true && data.refCode) setDone(`Đã nhận hồ sơ — mã ${data.refCode}`);
-      else if (data?.errors) setErrors(data.errors);
-      else setGeneral(data?.message || "Gửi không thành công. Vui lòng thử lại.");
+      const se = data?.errors && typeof data.errors === "object" ? (data.errors as Record<string, string>) : null;
+      if (isSuccess(res.ok, data)) setDone(`Đã nhận hồ sơ — mã ${data.refCode}`);
+      else if (se && Object.keys(se).some((k) => se[k] && visible(k))) {
+        setErrors(se);
+        setTimeout(() => focusFirst(se), 0);
+      }
+      else setGeneral(data?.message || "Không gửi được hồ sơ. Vui lòng kiểm tra lại và thử lại.");
     } catch {
       setGeneral("Không gửi được do lỗi mạng. Dữ liệu của bạn vẫn được giữ — vui lòng thử lại.");
     } finally {
@@ -61,8 +73,6 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
       setSubmitting(false);
     }
   }
-
-  if (done) return <p role="status" className="rounded bg-green-50 px-4 py-3 font-semibold text-green-900">{done}</p>;
 
   const field = (name: string, label: string, el: (p: object) => React.ReactNode) => (
     <div>
@@ -73,7 +83,9 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
   );
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} noValidate aria-busy={submitting} className="space-y-4">
+    <>
+    <p ref={statusRef} tabIndex={-1} role="status" className={done ? "rounded bg-green-50 px-4 py-3 font-semibold text-green-900" : undefined}>{done}</p>
+    {!done && <form ref={formRef} onSubmit={onSubmit} noValidate aria-busy={submitting} className="space-y-4">
       {general && <p role="alert" className="rounded bg-red-50 px-4 py-3 font-semibold text-red-900">{general}</p>}
       {errors.contact && <p id="e-contact" role="alert" className="rounded bg-red-50 px-4 py-3 font-semibold text-red-900">{errors.contact}</p>}
       {errors.kind && <p role="alert" className="font-semibold text-red-900">{errors.kind}</p>}
@@ -107,6 +119,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
       <button type="submit" disabled={submitting} aria-busy={submitting} className="inline-flex min-h-11 items-center justify-center rounded bg-brand px-6 font-semibold text-white disabled:opacity-60">
         {submitting ? "Đang gửi…" : general ? "Thử lại" : apply ? "Gửi hồ sơ" : "Gửi yêu cầu tư vấn"}
       </button>
-    </form>
+    </form>}
+    </>
   );
 }
