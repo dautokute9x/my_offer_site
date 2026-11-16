@@ -48,3 +48,60 @@ describe("sniffFileKind", () => {
     expect(sniffFileKind(Uint8Array.from([0x25, 0x50]))).toBeNull();
   });
 });
+
+describe("validateApplication hardening", () => {
+  const bad = (o: Record<string, unknown>) => validateApplication({ ...p, ...o } as never);
+  it("never throws on odd shapes", () => {
+    for (const v of [undefined, null, 5, {}, []]) {
+      for (const k of ["fullName", "email", "phone", "facebook", "note", "idempotencyKey", "jobCode", "kind"]) {
+        expect(() => bad({ [k]: v })).not.toThrow();
+      }
+    }
+    expect(bad({ fullName: undefined }).fullName).toBeDefined();
+    expect(bad({ note: 5 })).toBeDefined();
+    expect(Object.keys(bad({ phone: undefined, email: null, facebook: 5 }))).toContain("contact");
+    expect(() => validateApplication({} as never)).not.toThrow();
+  });
+  it("file missing type is treated as empty mime", () => expect(bad({ file: { name: "a.pdf", size: 5 } })).toEqual({}));
+  it("odd files", () => {
+    for (const f of [{ size: 5 }, { name: 5, size: 5, type: 1 }, "x", 7, []]) {
+      expect(bad({ file: f }).file).toBeDefined();
+    }
+    for (const size of [NaN, -1, Infinity, "abc", 1.5]) {
+      expect(bad({ file: { name: "a.pdf", size, type: "application/pdf" } }).file).toBeDefined();
+    }
+  });
+  it("file names", () => {
+    for (const name of ["cv.pdf.exe", "cv.", ".pdf", "pdf"]) {
+      expect(bad({ file: { name, size: 5, type: "" } }).file).toBeDefined();
+    }
+    for (const name of ["CV.PDF", "hồ sơ.pdf"]) {
+      expect(bad({ file: { name, size: 5, type: "" } })).toEqual({});
+    }
+  });
+  it("zip mime for docx/xlsx", () => {
+    expect(bad({ file: { name: "a.docx", size: 5, type: "application/zip" } })).toEqual({});
+    expect(bad({ file: { name: "a.xlsx", size: 5, type: "application/x-zip-compressed" } })).toEqual({});
+    expect(bad({ file: { name: "a.pdf", size: 5, type: "application/zip" } }).file).toBeDefined();
+  });
+  it("facebook", () => {
+    for (const f of ["https://facebook.com.evil.com/x", "https://evil.com/facebook.com", "https://facebook.com@evil.com", "javascript:alert(1)", "//evil.com", "<script>", "a\nb"]) {
+      expect(bad({ facebook: f }).facebook).toBeDefined();
+    }
+    for (const f of ["https://www.facebook.com/nguyen.van.a", "nguyen.van.a", "https://facebook.com/profile.php?id=123", "https://fb.com/abc"]) {
+      expect(bad({ facebook: f }).facebook).toBeUndefined();
+    }
+  });
+  it("phone", () => {
+    expect(bad({ phone: "++84" }).phone).toBeDefined();
+    expect(bad({ phone: "abc123456789" }).phone).toBeDefined();
+    expect(bad({ phone: "+84 90 123 4567" })).toEqual({});
+  });
+  it("consent and jpLevel", () => {
+    expect(bad({ consent: "false" }).consent).toBeDefined();
+    expect(bad({ consent: "true" }).consent).toBeDefined();
+    expect(bad({ jpLevel: "N9" }).jpLevel).toBeDefined();
+    expect(bad({ jpLevel: "N3" })).toEqual({});
+    expect(bad({ jpLevel: "none" })).toEqual({});
+  });
+});
