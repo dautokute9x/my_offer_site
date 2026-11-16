@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { isAdminSettableStatus, UUID_RE } from "@/lib/applications/status";
-import { removeApplicationObjects } from "@/lib/applications/server";
+import { removeApplicationObjects, removeObjectsAt } from "@/lib/applications/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { jstTodayKey } from "@/lib/time";
 
@@ -40,22 +40,26 @@ export async function addNote(_p: AppState, fd: FormData): Promise<AppState> {
   return ok("Đã thêm ghi chú.");
 }
 
-// Xóa CV trước, lỗi thì dừng (không để CV mồ côi); ghi chú xóa theo (FK on delete cascade).
-// onlyIf: điều kiện PostgREST lặp lại ở bước xóa dòng (purge), để hồ sơ vừa hoàn tất không bị xóa.
 type Sb = Awaited<ReturnType<typeof createServerSupabase>>;
-async function deleteOne(sb: Sb, id: string, onlyIf?: string): Promise<"deleted" | "skipped" | "failed"> {
-  if (onlyIf) {
-    const { data, error } = await sb.from("applications").select("id").eq("id", id).or(onlyIf);
-    if (error) { console.error("[admin/deleteApplication]", error.code); return "failed"; }
-    if (!data?.length) return "skipped"; // không còn đủ điều kiện: giữ nguyên cả CV
-  }
+
+// Xóa tay: xóa CV trước, lỗi thì dừng (không để CV mồ côi); ghi chú xóa theo (FK on delete cascade).
+async function deleteOne(sb: Sb, id: string): Promise<"deleted" | "skipped" | "failed"> {
   const r = await removeApplicationObjects(id);
   if ("error" in r) return r.error === "not_found" ? "skipped" : "failed";
-  let q = sb.from("applications").delete().eq("id", id);
-  if (onlyIf) q = q.or(onlyIf);
-  const { data, error } = await q.select("id");
+  const { data, error } = await sb.from("applications").delete().eq("id", id).select("id");
   if (error) { console.error("[admin/deleteApplication]", error.code); return "failed"; }
   return data?.length ? "deleted" : "skipped";
+}
+
+// Purge: xóa dòng TRƯỚC với điều kiện purge (completeApplication song song có thể vừa chuyển sang new → không khớp → không đụng storage),
+// rồi xóa CV theo id + created_at của dòng vừa xóa. Storage lỗi sau đó chỉ để lại object mồ côi (ghi log prefix, không PII).
+async function purgeOne(sb: Sb, id: string, cond: string): Promise<"deleted" | "skipped" | "failed"> {
+  const { data, error } = await sb.from("applications").delete().eq("id", id).or(cond).select("id, created_at");
+  if (error) { console.error("[admin/purge]", error.code); return "failed"; }
+  if (!data?.length) return "skipped";
+  const r = await removeObjectsAt(data[0].id, data[0].created_at);
+  if ("error" in r) { console.error("[admin/purge] orphan objects for application", data[0].id, r.error); return "failed"; }
+  return "deleted";
 }
 
 export async function deleteApplication(_p: AppState, fd: FormData): Promise<AppState> {
@@ -89,7 +93,7 @@ export async function purgeExpired(): Promise<AppState> {
     const { data, error } = await q;
     if (error) { console.error("[admin/purge]", error.code); return err(`Dọn dở dang do lỗi truy vấn (đã xóa ${deleted}, lỗi ${failed}).`); }
     if (!data?.length) break;
-    for (const { id } of data) { const r = await deleteOne(sb, id, cond); if (r === "deleted") deleted++; else if (r === "failed") failed++; }
+    for (const { id } of data) { const r = await purgeOne(sb, id, cond); if (r === "deleted") deleted++; else if (r === "failed") failed++; }
     last = data[data.length - 1].id;
     if (data.length < BATCH) break;
   }

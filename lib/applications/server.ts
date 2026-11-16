@@ -139,7 +139,13 @@ export async function removeApplicationObjects(id: string): Promise<{ ok: true }
   const { data: row, error } = await sb.from("applications").select("created_at").eq("id", id).maybeSingle();
   if (error) return fail("select", error);
   if (!row) return { error: "not_found" };
-  const d = new Date(row.created_at);
+  return removeObjectsAt(id, row.created_at);
+}
+
+// Biến thể khi đã có created_at (dòng vừa bị xóa, dùng cho purge).
+export async function removeObjectsAt(id: string, createdAt: string): Promise<{ ok: true } | { error: ApplicationError }> {
+  const sb = createAdminSupabase();
+  const d = new Date(createdAt);
   // Cùng công thức với start_application: cvs/<yyyy>/<mm theo UTC của created_at>/<id>
   const dir = `cvs/${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${id}`;
   const bucket = sb.storage.from("cvs");

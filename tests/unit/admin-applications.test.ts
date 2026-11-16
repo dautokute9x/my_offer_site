@@ -8,6 +8,7 @@ const requireAdmin = vi.fn();
 const createSignedUrl = vi.fn();
 const adminCreated = vi.fn();
 const removeObjects = vi.fn();
+const removeAt = vi.fn();
 let demo = false;
 
 // Builder chainable: mọi method ghi lại và trả chính nó; await → kết quả do test cấu hình theo thao tác (select/update/delete).
@@ -27,7 +28,7 @@ vi.mock("@/lib/supabase/server", () => ({ createServerSupabase: async () => ({ f
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminSupabase: () => { adminCreated(); return { storage: { from: () => ({ createSignedUrl }) } }; },
 }));
-vi.mock("@/lib/applications/server", () => ({ removeApplicationObjects: (...a: unknown[]) => removeObjects(...a) }));
+vi.mock("@/lib/applications/server", () => ({ removeApplicationObjects: (...a: unknown[]) => removeObjects(...a), removeObjectsAt: (...a: unknown[]) => removeAt(...a) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: (u: string) => { throw new Error(`REDIRECT ${u}`); } }));
 
@@ -36,7 +37,7 @@ const ctxParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
 beforeEach(() => {
   calls.length = 0; demo = false; results = [];
-  for (const m of [requireAdmin, createSignedUrl, adminCreated, removeObjects]) m.mockReset();
+  for (const m of [requireAdmin, createSignedUrl, adminCreated, removeObjects, removeAt]) m.mockReset();
   requireAdmin.mockResolvedValue({ userId: "u1", email: "a@b" });
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -112,35 +113,38 @@ describe("actions", () => {
     expect(calls.some((c) => c.op === "applications.delete")).toBe(true);
   });
 
-  it("purge: bộ lọc JST + 24h, bước xóa lặp lại điều kiện, tiến qua id lỗi rồi dừng", async () => {
-    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-11-16T16:00:00Z")); // = 2026-11-17 01:00 JST
-    const A = "00000000-0000-4000-8000-00000000000a", B = "00000000-0000-4000-8000-00000000000b";
+  const purge = async (rows: { id: string; created_at: string }[][], deleteRows: (id: string) => unknown[]) => {
     let listed = 0;
     results = [(op, ctx) => {
-      if (ctx.includes("delete")) return { data: [{ id: "x" }], error: null };
-      if (ctx.includes("gt") || !ctx.includes("order")) return ctx.includes("order") ? { data: [], error: null } : { data: [{ id: "x" }], error: null }; // precheck còn đủ điều kiện
-      return { data: listed++ === 0 ? [{ id: A }, { id: B }] : [], error: null };
+      if (ctx.includes("delete")) return { data: deleteRows(ctx.join(",")), error: null };
+      return { data: listed++ === 0 ? rows[0] : [], error: null };
     }];
-    removeObjects.mockImplementation(async (id: string) => (id === A ? { error: "server_error" } : { ok: true }));
-    const r = await (await load()).purgeExpired();
+    return (await load()).purgeExpired();
+  };
+  const A = "00000000-0000-4000-8000-00000000000a", B = "00000000-0000-4000-8000-00000000000b";
+  const T = "2026-11-01T00:00:00Z";
+
+  it("purge: bộ lọc JST + 24h giống nhau ở truy vấn và bước xóa; xóa dòng trước, rồi CV theo created_at", async () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-11-16T16:00:00Z")); // = 2026-11-17 01:00 JST
+    removeAt.mockImplementation(async (id: string) => (id === A ? { error: "server_error" } : { ok: true }));
+    let n = 0;
+    const r = await purge([[{ id: A, created_at: T }, { id: B, created_at: T }]], () => [{ id: n++ === 0 ? A : B, created_at: T }]);
     vi.useRealTimers();
     const filters = calls.filter((c) => c.op === "applications.or").map((c) => String(c.args[0]));
     expect(filters[0]).toBe("delete_after.lt.2026-11-17,and(status.eq.pending_upload,created_at.lt.2026-11-15T16:00:00.000Z)");
     expect(filters.every((f) => f === filters[0])).toBe(true);
-    expect(filters.length).toBeGreaterThan(3); // list + precheck/delete cho từng id
-    expect(removeObjects.mock.calls.map((c) => c[0])).toEqual([A, B]);
-    expect(calls.filter((c) => c.op === "applications.delete")).toHaveLength(1); // chỉ B; A lỗi storage → không xóa dòng
-    expect(r.error).toMatch(/1 hồ sơ lỗi/);
+    expect(removeObjects).not.toHaveBeenCalled(); // không có bước xóa storage trước khi xóa dòng
+    expect(removeAt.mock.calls).toEqual([[A, T], [B, T]]);
+    expect(r.error).toMatch(/Đã xóa 1 hồ sơ, 1 hồ sơ lỗi/); // A: storage lỗi → failed; B: deleted
   });
-
-  it("purge: hồ sơ không còn đủ điều kiện → giữ nguyên CV", async () => {
-    let listed = 0;
-    results = [(op, ctx) => {
-      if (ctx.includes("order")) return { data: listed++ === 0 ? [{ id: ID }] : [], error: null };
-      return { data: [], error: null }; // precheck rỗng
-    }];
-    const r = await (await load()).purgeExpired();
-    expect(removeObjects).not.toHaveBeenCalled();
+  it("purge: xóa dòng không trả hàng → không đụng storage", async () => {
+    const r = await purge([[{ id: A, created_at: T }]], () => []);
+    expect(removeAt).not.toHaveBeenCalled();
     expect(r.ok).toMatch(/0 hồ sơ/);
+  });
+  it("purge: dòng xóa + storage ok → tính deleted", async () => {
+    removeAt.mockResolvedValue({ ok: true });
+    const r = await purge([[{ id: A, created_at: T }]], () => [{ id: A, created_at: T }]);
+    expect(r.ok).toMatch(/Đã xóa 1 hồ sơ/);
   });
 });
