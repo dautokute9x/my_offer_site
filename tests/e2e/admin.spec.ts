@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Chế độ demo (không có Supabase env).
-for (const path of ["/admin", "/admin/login", "/admin/tin", "/admin/tin/moi", "/admin/tin/1", "/admin/tin/1?xem=truoc", "/admin/danh-muc", "/admin/noi-dung"]) {
+for (const path of ["/admin", "/admin/login", "/admin/tin", "/admin/tin/moi", "/admin/tin/1", "/admin/tin/1?xem=truoc", "/admin/danh-muc", "/admin/noi-dung", "/admin/nhap-csv"]) {
   test(`demo: ${path} báo chưa kết nối Supabase`, async ({ page }) => {
     const res = await page.goto(path);
     expect(res?.status()).toBe(200);
