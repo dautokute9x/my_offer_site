@@ -1,4 +1,4 @@
-import { isDemoMode } from "@/lib/site-defaults";
+import { isDemoMode } from "@/lib/data";
 
 export default function DemoBanner() {
   if (!isDemoMode()) return null;

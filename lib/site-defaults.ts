@@ -30,8 +30,3 @@ export const siteDefaults: SiteSettings = {
 export function isPlaceholder(v: string): boolean {
   return /^\[.*\]$/.test(v.trim());
 }
-
-// Tạm thời; Task 4 chuyển sang lib/data.
-export function isDemoMode(): boolean {
-  return !process.env.NEXT_PUBLIC_SUPABASE_URL;
-}
