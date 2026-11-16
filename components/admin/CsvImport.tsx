@@ -19,6 +19,7 @@ export function CsvImport() {
     if (!f) return;
     if (f.size > MAX_BYTES) { setMsg("Tệp quá lớn (tối đa 2 MB)."); return; }
     const t = await f.text();
+    if (t.includes("\uFFFD")) { setMsg("Tệp phải được lưu dạng UTF-8 (CSV UTF-8 trong Excel)."); return; }
     setText(t); run(t, null);
   };
   const errCount = preview ? preview.errors.length + preview.lines.reduce((n, l) => n + l.errors.length, 0) : 0;
@@ -26,6 +27,7 @@ export function CsvImport() {
   const doImport = () => start(async () => {
     try { setResult(await importCsv(text!, preview!.mapping)); } catch { setResult({ ok: false, message: "Không nhập được. Thử lại." }); }
   });
+  const updates = preview?.lines.filter((l) => l.action === "update").length ?? 0;
   const setCol = (col: string, v: string) => run(text!, { ...preview!.mapping, [col]: v === "" ? null : Number(v) });
 
   return (
@@ -63,7 +65,7 @@ export function CsvImport() {
                   {preview.lines.map((l) => (
                     <tr key={l.line} className="border-t align-top">
                       <td className="p-2">{l.line}</td>
-                      <td className="p-2">{l.action === "create" ? "Tạo" : "Cập nhật"}</td>
+                      <td className="p-2">{l.action === "create" ? "Tạo" : <strong className="text-red-700">Ghi đè</strong>}</td>
                       <td className="p-2">{l.code}</td>
                       <td className="p-2">{l.title}</td>
                       <td className="p-2">
@@ -75,6 +77,7 @@ export function CsvImport() {
                 </tbody>
               </table>
             </div>
+            {updates > 0 && <p role="alert" className="rounded border-2 border-red-600 bg-red-50 p-3 text-sm font-bold text-red-800">{updates} tin đã tồn tại sẽ bị GHI ĐÈ toàn bộ nội dung; ô để trống sẽ xóa nội dung hiện có.</p>}
             <button type="button" onClick={doImport} disabled={!canImport} className="min-h-11 rounded bg-navy px-4 font-semibold text-white disabled:opacity-60">
               Nhập {preview.valid} tin
             </button>

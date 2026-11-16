@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCsv } from "@/lib/csv";
+import { CsvError, parseCsv } from "@/lib/csv";
 
 describe("parseCsv", () => {
   it("bỏ BOM, nhận CRLF và LF, bỏ dòng trống cuối", () => {
@@ -12,4 +12,8 @@ describe("parseCsv", () => {
     expect(parseCsv("a,,c\n,,x")).toEqual([["a", "", "c"], ["", "", "x"]]);
   });
   it("chuỗi rỗng → không dòng nào", () => expect(parseCsv("")).toEqual([]));
+});
+
+describe("parseCsv lỗi", () => {
+  it("ngoặc kép chưa đóng → ném CsvError", () => expect(() => parseCsv('a,b\n1,"x\n2,3')).toThrow(CsvError));
 });

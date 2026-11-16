@@ -1,3 +1,4 @@
+import { CsvError, parseCsv } from "@/lib/csv";
 import { normText } from "@/lib/normalize";
 import { jstToIso } from "@/lib/time";
 import type { Catalog } from "@/lib/types";
@@ -18,6 +19,19 @@ export type ImportRow = { line: number; action: "create" | "update"; data: JobIn
 
 export const MAX_ROWS = 2000;
 export const MAX_BYTES = 2 * 1024 * 1024;
+
+// Đọc + kiểm tra tệp thô; lỗi nghiêm trọng trả về `fatal` (tiếng Việt) thay vì ném.
+export function readCsv(text: unknown): { fatal: string } | { header: string[]; data: string[][] } {
+  if (typeof text !== "string" || new TextEncoder().encode(text).length > MAX_BYTES) return { fatal: "Tệp phải là văn bản UTF-8 và không quá 2 MB." };
+  if (text.includes("\uFFFD")) return { fatal: "Tệp phải được lưu dạng UTF-8 (CSV UTF-8 trong Excel)." };
+  try {
+    const [header, ...data] = parseCsv(text);
+    return header ? { header, data } : { fatal: "Tệp rỗng." };
+  } catch (e) {
+    if (e instanceof CsvError) return { fatal: e.message };
+    throw e;
+  }
+}
 
 const key = (s: string) => s.replace(/^﻿/, "").trim().toLowerCase().replace(/\s+/g, "_");
 export function mapColumns(header: string[]): Mapping {
@@ -68,7 +82,8 @@ export function validateRows(rows: string[][], mapping: Mapping, catalog: Catalo
     return { rows: out, errors: [{ line: 1, column: "", message: `Tệp có ${rows.length} dòng; tối đa ${MAX_ROWS} dòng mỗi lần nhập.` }], warnings };
   }
   const existing = new Set([...existingCodes].map((c) => c.toLowerCase()));
-  const existingList = [...existing];
+  const numericLen = new Map<number, number>(); // giá trị số → độ dài mã số dài nhất đã có
+  for (const e of existing) if (/^\d+$/.test(e)) numericLen.set(Number(e), Math.max(numericLen.get(Number(e)) ?? 0, e.length));
   const lookup = (items: { id: number; keys: string[] }[]) => {
     const m = new Map<string, number>();
     for (const it of items) for (const k of it.keys) m.set(normText(k), it.id);
@@ -132,7 +147,7 @@ export function validateRows(rows: string[][], mapping: Mapping, catalog: Catalo
 
     const code = cell(r, "code");
     if (code && (codeCount.get(code.toLowerCase()) ?? 0) > 1) bad("code", "Mã tin bị trùng trong tệp.");
-    if (/^\d+$/.test(code) && existingList.some((e) => /^\d+$/.test(e) && e.length > code.length && Number(e) === Number(code)))
+    if (/^\d+$/.test(code) && (numericLen.get(Number(code)) ?? 0) > code.length)
       warnings.push({ line, column: "code", message: "Có thể Excel đã bỏ số 0 ở đầu." });
 
     const res = normalizeJobInput(raw, catalog);

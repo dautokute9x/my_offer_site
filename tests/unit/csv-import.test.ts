@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseCsv } from "@/lib/csv";
-import { checkMapping, COLUMNS, mapColumns, validateRows } from "@/lib/admin/csv-import";
+import { checkMapping, COLUMNS, mapColumns, readCsv, validateRows } from "@/lib/admin/csv-import";
 import { demoCatalog } from "@/lib/demo/catalog";
 
 const catalog = demoCatalog;
@@ -82,4 +82,13 @@ describe("checkMapping", () => {
     expect(checkMapping({ evil: 0 }, 2)).toBeNull();
     expect(checkMapping("x", 2)).toBeNull();
   });
+});
+
+describe("readCsv", () => {
+  it("ngoặc kép chưa đóng → fatal", () => expect(readCsv('a,b\n1,"x\n2,3')).toEqual({ fatal: expect.stringContaining("chưa đóng") }));
+  it("quá 2 MB (tính theo byte) → fatal", () => {
+    expect(readCsv("a\n" + "あ".repeat(700_000))).toEqual({ fatal: expect.stringContaining("2 MB") });
+    expect(readCsv("a\n1")).toEqual({ header: ["a"], data: [["1"]] });
+  });
+  it("không phải UTF-8 (U+FFFD) → fatal", () => expect(readCsv("a\n\uFFFD")).toEqual({ fatal: expect.stringContaining("UTF-8") }));
 });
