@@ -6,4 +6,8 @@ describe("codeFromSlugParam", () => {
     expect(codeFromSlugParam("thiet-ke-dien-plc-00412")).toBe("00412");
     expect(codeFromSlugParam("00412")).toBe("00412");
   });
+  it("does not throw on edge input", () => {
+    expect(codeFromSlugParam("abc-")).toBe("");
+    expect(codeFromSlugParam("")).toBe("");
+  });
 });

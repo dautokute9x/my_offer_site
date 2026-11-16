@@ -36,9 +36,10 @@ export default async function JobPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const job = await getJobByCode(codeFromSlugParam(slug));
   if (!job) notFound();
-  if (slug !== `${job.slug}-${job.code}`) permanentRedirect(jobHref(job));
-  const [catalog, related, sp] = await Promise.all([getCatalog(), getRelatedJobs(job, 4), searchParams]);
+  const sp = await searchParams;
   const poster = sp.xem === "tomtat";
+  if (slug !== `${job.slug}-${job.code}`) permanentRedirect(jobHref(job) + (poster ? "?xem=tomtat" : ""));
+  const [catalog, related] = await Promise.all([getCatalog(), getRelatedJobs(job, 4)]);
   const closed = isClosed(job);
   const base = jobHref(job);
   const tab = (on: boolean) => `min-h-11 inline-flex items-center rounded-t px-4 font-semibold ${on ? "bg-white text-navy border border-b-0 border-slate-200" : "text-brand"}`;
