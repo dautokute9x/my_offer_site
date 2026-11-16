@@ -10,8 +10,6 @@ import JobCard from "@/components/JobCard";
 import JobDetailFull from "@/components/job/JobDetailFull";
 import JobDetailPoster from "@/components/job/JobDetailPoster";
 
-export const revalidate = 300;
-
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;

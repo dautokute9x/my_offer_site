@@ -49,8 +49,8 @@ export function listUpcomingInterviews(
 
 export const countOpenJobsByGroup = () => rpc<Record<string, number>>("open_job_counts_by_group");
 
-async function table<T>(name: string, order: string): Promise<T[]> {
-  const { data, error } = await createPublicSupabase().from(name).select("*").order(order);
+async function table<T>(name: string, ...order: string[]): Promise<T[]> {
+  const { data, error } = await order.reduce((q, c) => q.order(c), createPublicSupabase().from(name).select("*"));
   if (error) fail(error);
   return data as T[];
 }
@@ -59,8 +59,8 @@ type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-exp
 
 export async function getCatalog(): Promise<Catalog> {
   const [p, g, o, s, b] = await Promise.all([
-    table<Row>("prefectures", "id"), table<Row>("occupation_groups", "id"), table<Row>("occupations", "id"),
-    table<Row>("skills", "id"), table<Row>("benefits", "id"),
+    table<Row>("prefectures", "id"), table<Row>("occupation_groups", "sort", "id"), table<Row>("occupations", "id"),
+    table<Row>("skills", "id"), table<Row>("benefits", "sort", "id"),
   ]);
   return {
     prefectures: p.map((r) => ({ id: r.id, code: r.code, nameJa: r.name_ja, nameVi: r.name_vi, romaji: r.romaji, region: r.region, aliases: r.aliases })),
