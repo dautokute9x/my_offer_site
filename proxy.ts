@@ -20,7 +20,16 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser(); // kích hoạt làm mới token
+  const { data: { user } } = await supabase.auth.getUser(); // kích hoạt làm mới token
+  const { pathname, search } = request.nextUrl;
+  if (!user && !/^\/admin\/(login|logout)\/?$/.test(pathname)) {
+    const to = new URL("/admin/login", request.url);
+    to.searchParams.set("next", pathname + search);
+    const redirect = NextResponse.redirect(to);
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    response.headers.forEach((v, k) => { if (k.startsWith("cache-control") || k === "expires" || k === "pragma") redirect.headers.set(k, v); });
+    return redirect;
+  }
   return response;
 }
 

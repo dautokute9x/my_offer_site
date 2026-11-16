@@ -12,6 +12,9 @@ export async function login(formData: FormData) {
     email: String(formData.get("email") ?? "").trim(),
     password: String(formData.get("password") ?? ""),
   });
-  if (error) redirect(`/admin/login?error=invalid&next=${encodeURIComponent(next)}`);
+  if (error) {
+    if (error.code !== "invalid_credentials") console.error("[admin/login]", error.code, error.message);
+    redirect(`/admin/login?error=invalid&next=${encodeURIComponent(next)}`);
+  }
   redirect(next); // requireAdmin của trang đích kiểm tra quyền admin
 }
