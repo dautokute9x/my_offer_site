@@ -77,7 +77,7 @@ export function CsvImport() {
                 </tbody>
               </table>
             </div>
-            {updates > 0 && <p role="alert" className="rounded border-2 border-red-600 bg-red-50 p-3 text-sm font-bold text-red-800">{updates} tin đã tồn tại sẽ bị GHI ĐÈ toàn bộ nội dung; ô để trống sẽ xóa nội dung hiện có.</p>}
+            {updates > 0 && <p role="alert" className="rounded border-2 border-red-600 bg-red-50 p-3 text-sm font-bold text-red-800">{updates} tin đã tồn tại sẽ bị GHI ĐÈ toàn bộ nội dung; ô để trống sẽ xóa nội dung hiện có (riêng lịch phỏng vấn chỉ được thêm, không bị xóa).</p>}
             <button type="button" onClick={doImport} disabled={!canImport} className="min-h-11 rounded bg-navy px-4 font-semibold text-white disabled:opacity-60">
               Nhập {preview.valid} tin
             </button>
