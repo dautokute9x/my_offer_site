@@ -32,3 +32,9 @@ export function jstToIso(dateKey: string, hhmm: string): string {
 export function jstTodayKey(now: Date = new Date()): string {
   return jstDateKey(now.toISOString());
 }
+
+// "2026-11-20" -> "Thứ Sáu, 20/11/2026"
+export function dayHeading(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-");
+  return `${WEEKDAYS[new Date(Date.UTC(+y, +m - 1, +d)).getUTCDay()]}, ${d}/${m}/${y}`;
+}

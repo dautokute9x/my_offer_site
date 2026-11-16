@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatJst, formatVn, jstDateKey, jstToIso, jstTodayKey } from "@/lib/time";
+import { formatJst, formatVn, jstDateKey, jstToIso, jstTodayKey, dayHeading } from "@/lib/time";
 
 describe("time", () => {
   it("formats JST and VN", () => {
@@ -15,5 +15,8 @@ describe("time", () => {
   it("converts JST keys", () => {
     expect(jstToIso("2026-11-20", "10:00")).toBe("2026-11-20T01:00:00.000Z");
     expect(jstTodayKey(new Date("2026-11-19T16:00:00Z"))).toBe("2026-11-20");
+  });
+  it("day heading", () => {
+    expect(dayHeading("2026-11-20")).toBe("Thứ Sáu, 20/11/2026");
   });
 });

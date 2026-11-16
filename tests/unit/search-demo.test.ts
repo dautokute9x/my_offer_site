@@ -3,6 +3,7 @@ import { demoCatalog } from "@/lib/demo/catalog";
 import { buildDemoJobs } from "@/lib/demo/jobs";
 import { getJobByCode, getRelatedJobs, listUpcomingInterviews, searchJobs } from "@/lib/data";
 import { parseFilters } from "@/lib/filters";
+import { jstDateKey } from "@/lib/time";
 
 const empty = parseFilters({}, demoCatalog);
 const all = buildDemoJobs(new Date()).jobs;
@@ -105,5 +106,16 @@ describe("dữ liệu liên quan", () => {
     expect(await listUpcomingInterviews({ prefectures: ["27"], occupations: ["plc-mach-dien"] })).toEqual([]);
     const none = await listUpcomingInterviews({ from: "2999-01-01", prefectures: [], occupations: [] });
     expect(none).toEqual([]);
+  });
+
+  it("lịch phỏng vấn: loại hủy/đã qua, 3 lịch của tin 00412, lọc from/to theo ngày JST", async () => {
+    const all = await listUpcomingInterviews({ prefectures: [], occupations: [] });
+    expect(all.some((i) => i.id === 7 || i.id === 8)).toBe(false); // id 7 đã qua, id 8 cancelled
+    const mine = all.filter((i) => i.job.code === "00412");
+    expect(mine).toHaveLength(3);
+    const days = mine.map((i) => jstDateKey(i.startsAt));
+    const one = await listUpcomingInterviews({ from: days[1], to: days[1], prefectures: [], occupations: [] });
+    expect(one.length).toBeGreaterThan(0);
+    expect(one.every((i) => jstDateKey(i.startsAt) === days[1])).toBe(true);
   });
 });
