@@ -6,7 +6,8 @@ export function normText(s: string): string {
     .replace(/[̀-ͯ]/g, "")
     .replace(/đ/g, "d")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .normalize("NFC");
 }
 
 export function normCode(s: string): string {
