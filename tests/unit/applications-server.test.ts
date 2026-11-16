@@ -6,13 +6,15 @@ type Row = { id: string; ref_code: string; status: string; cv_path: string | nul
 let row: Row | null;
 let object: { size: number; bytes: Uint8Array } | null;
 let onDownload = () => {};
+let dirFiles: string[] = [];
+const listed: string[] = [];
 const rpc = vi.fn();
 const remove = vi.fn(async (paths: string[]) => ({ data: paths, error: null }));
 const createSignedUploadUrl = vi.fn(async (path: string) => ({ data: { path, token: "tok", signedUrl: `https://x/upload/${path}?token=tok` }, error: null }));
 const fake = {
   rpc,
   from: () => ({
-    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row && { ...row }, error: null }) }) }),
+    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row && { ...row, created_at: "2026-10-31T23:30:00+00:00" }, error: null }) }) }),
     update: (patch: Partial<Row>) => ({
       eq: () => ({ eq: async () => { if (row?.status === "pending_upload") Object.assign(row, patch); return { error: null }; } }),
     }),
@@ -21,16 +23,17 @@ const fake = {
     from: () => ({
       createSignedUploadUrl,
       remove: async (paths: string[]) => { object = null; return remove(paths); },
-      list: async (_dir: string, opts: { search: string }) => ({
-        data: object && row?.cv_path?.endsWith(opts.search) ? [{ name: opts.search, metadata: { size: object.size } }] : [],
-        error: null,
-      }),
+      list: async (dir: string, opts?: { search?: string }) => {
+        listed.push(dir);
+        if (!opts?.search) return { data: dirFiles.map((name) => ({ name })), error: null };
+        return { data: object && row?.cv_path?.endsWith(opts.search) ? [{ name: opts.search, metadata: { size: object.size } }] : [], error: null };
+      },
       download: async () => (onDownload(), object ? { data: new Blob([object.bytes as BlobPart]), error: null } : { data: null, error: { message: "not found" } }),
     }),
   },
 };
 vi.mock("@/lib/supabase/admin", () => ({ createAdminSupabase: () => fake }));
-import { clientIp, completeApplication, startApplication } from "@/lib/applications/server";
+import { clientIp, completeApplication, removeApplicationObjects, startApplication } from "@/lib/applications/server";
 import { POST as startPOST } from "@/app/api/applications/start/route";
 
 const ID = "11111111-1111-4111-8111-111111111111";
@@ -48,6 +51,8 @@ beforeEach(() => {
   row = { id: ID, ref_code: "HS-ABCDEF", status: "pending_upload", cv_path: PATH, idempotency_key: "k-1" };
   object = { size: pdf.length, bytes: pdf };
   onDownload = () => {};
+  dirFiles = [];
+  listed.length = 0;
 });
 
 describe("completeApplication", () => {
@@ -102,11 +107,11 @@ describe("startApplication", () => {
     expect(r).toEqual({ id: ID, refCode: "HS-ABCDEF", upload: { path: PATH, token: "tok", signedUrl: `https://x/upload/${PATH}?token=tok` } });
     expect(remove).not.toHaveBeenCalled();
   });
-  it("gửi lại hồ sơ đang pending_upload → không xóa object, URL mới upsert", async () => {
+  it("gửi lại hồ sơ đang pending_upload → không xóa object, URL không upsert", async () => {
     rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "pending_upload", cvPath: PATH, created: false }, error: null });
     const r = await startApplication(input, "1.2.3.4");
     expect(remove).not.toHaveBeenCalled();
-    expect(createSignedUploadUrl).toHaveBeenCalledWith(PATH, { upsert: true });
+    expect(createSignedUploadUrl).toHaveBeenCalledWith(PATH);
     expect(r).toMatchObject({ upload: { path: PATH } });
   });
   it("hồ sơ đã new → refCode, không upload", async () => {
@@ -130,6 +135,23 @@ describe("startApplication", () => {
     expect(clientIp(new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1", "x-real-ip": "8.8.8.8" }))).toBe("9.9.9.9");
     expect(clientIp(new Headers({ "x-real-ip": "8.8.8.8" }))).toBe("8.8.8.8");
     expect(clientIp(new Headers())).toBe("unknown");
+  });
+});
+
+describe("removeApplicationObjects", () => {
+  it("liệt kê và xóa mọi object dưới thư mục <id>/ (theo tháng UTC của created_at)", async () => {
+    dirFiles = ["a.pdf", "b.docx"];
+    expect(await removeApplicationObjects(ID)).toEqual({ ok: true });
+    expect(listed).toEqual([`cvs/2026/10/${ID}`]);
+    expect(remove).toHaveBeenCalledWith([`cvs/2026/10/${ID}/a.pdf`, `cvs/2026/10/${ID}/b.docx`]);
+  });
+  it("thư mục rỗng → không gọi remove", async () => {
+    expect(await removeApplicationObjects(ID)).toEqual({ ok: true });
+    expect(remove).not.toHaveBeenCalled();
+  });
+  it("không có hồ sơ → not_found", async () => {
+    row = null;
+    expect(await removeApplicationObjects(ID)).toEqual({ error: "not_found" });
   });
 });
 

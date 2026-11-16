@@ -16,9 +16,12 @@ begin
   a := start_application(pg_temp.req('k-1', 'ip-a'));
   b := start_application(pg_temp.req('k-1', 'ip-a'));
   if a ? 'error' or a->>'refCode' !~ '^HS-[2-9A-HJ-NP-Z]{6}$' then raise exception 'start lỗi: %', a; end if;
-  if b->>'refCode' <> a->>'refCode' or b->>'id' <> a->>'id' or b->>'cvPath' <> a->>'cvPath' then raise exception 'không idempotent: % / %', a, b; end if;
+  if b->>'refCode' <> a->>'refCode' or b->>'id' <> a->>'id' then raise exception 'không idempotent: % / %', a, b; end if;
+  -- Gửi lại khi còn pending_upload: path mới mỗi lần (URL cũ không ghi đè được object sau này).
+  if b->>'cvPath' = a->>'cvPath' then raise exception 'gửi lại phải cấp path mới: % / %', a, b; end if;
   if (a->>'created')::bool is not true or (b->>'created')::bool then raise exception 'cờ created sai: % / %', a, b; end if;
   if (select count(*) from applications where idempotency_key = 'k-1') <> 1 then raise exception 'trùng dòng'; end if;
+  a := b;  -- dòng hiện giữ path của lần gửi lại
   if a->>'status' <> 'pending_upload' then raise exception 'có CV phải pending_upload: %', a; end if;
   if a->>'cvPath' !~ ('^cvs/\d{4}/\d{2}/' || (a->>'id') || '/[0-9a-f-]{36}\.pdf$') then raise exception 'cvPath sai: %', a->>'cvPath'; end if;
   if not exists (select 1 from applications where id = (a->>'id')::uuid and job_id is not null and job_title is not null
@@ -42,15 +45,17 @@ begin
   update applications set created_at = now() - interval '11 minutes' where ip_hash = 'ip-a';
   if start_application(pg_temp.req('k-7', 'ip-a')) ? 'error' then raise exception 'dòng cũ vẫn bị tính'; end if;
 
-  -- Gửi lại hồ sơ còn pending_upload: cập nhật dữ liệu mới; đổi đuôi → path mới; chuyển sang tư vấn → new.
+  -- Gửi lại hồ sơ còn pending_upload: cập nhật dữ liệu mới; mỗi lần một path mới; chuyển sang tư vấn → new.
   r := start_application(pg_temp.req('k-r', 'ip-r'));
   b := start_application(pg_temp.req('k-r', 'ip-r', ext => 'docx') || '{"email": "moi@example.vn"}');
   if b->>'refCode' <> r->>'refCode' or b->>'status' <> 'pending_upload' or b->>'cvPath' = r->>'cvPath'
      or b->>'cvPath' !~ ('^cvs/\d{4}/\d{2}/' || (r->>'id') || '/[0-9a-f-]{36}\.docx$') then raise exception 'đổi đuôi sai: % / %', r, b; end if;
   if not exists (select 1 from applications where id = (r->>'id')::uuid and email = 'moi@example.vn'
       and cv_path = b->>'cvPath' and cv_mime = 'application/docx') then raise exception 'gửi lại không cập nhật dòng'; end if;
+  r := b;
   b := start_application(pg_temp.req('k-r', 'ip-r', ext => 'docx'));
-  if b->>'cvPath' <> (select cv_path from applications where id = (r->>'id')::uuid) then raise exception 'cùng đuôi phải giữ path'; end if;
+  if b->>'cvPath' = r->>'cvPath' or b->>'cvPath' !~ '\.docx$' or b->>'cvPath' <> (select cv_path from applications where id = (r->>'id')::uuid)
+    then raise exception 'cùng đuôi vẫn phải cấp path mới: % / %', r, b; end if;
   b := start_application(pg_temp.req('k-r', 'ip-r', null, 'consult'));
   if b->>'status' <> 'new' or b->>'cvPath' is not null or b->>'refCode' <> r->>'refCode' then raise exception 'chuyển tư vấn sai: %', b; end if;
   if not exists (select 1 from applications where id = (r->>'id')::uuid and kind = 'consult' and status = 'new' and cv_path is null)

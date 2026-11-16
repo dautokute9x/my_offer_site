@@ -33,14 +33,14 @@ begin
 
   if a.id is not null then
     -- Gửi lại khi còn pending_upload (vd. sau invalid_file): ghi đè dữ liệu mới nhập.
-    -- Cùng đuôi giữ path (signed URL upsert ghi đè); đổi đuôi → path mới; không còn CV (chuyển tư vấn) → new.
+    -- Luôn cấp path MỚI (upload không upsert): URL cũ chỉ còn trỏ tới path mồ côi, không ghi đè được object đã xác nhận.
+    -- Không còn CV (chuyển tư vấn) → new.
     update public.applications set kind = p->>'kind', job_id = j.id, job_code = coalesce(j.code, nullif(p->>'jobCode', '')),
       job_title = j.title_vi, full_name = p->>'fullName', email = nullif(p->>'email', ''), phone = nullif(p->>'phone', ''),
       facebook = nullif(p->>'facebook', ''), jp_level = nullif(p->>'jpLevel', ''), note = nullif(p->>'note', ''),
       consent_version = p->>'consentVersion', consent_at = now(),
-      cv_path = case when ext is null then null
-        when a.cv_path like '%.' || ext then a.cv_path
-        else 'cvs/' || to_char(a.created_at, 'YYYY/MM') || '/' || a.id || '/' || gen_random_uuid() || '.' || ext end,
+      cv_path = case when ext is not null then
+        'cvs/' || to_char(a.created_at at time zone 'UTC', 'YYYY/MM') || '/' || a.id || '/' || gen_random_uuid() || '.' || ext end,
       cv_mime = case when ext is not null then p->>'cvMime' end,
       status = case when ext is null then 'new' else 'pending_upload' end
     where id = a.id returning * into a;
@@ -58,7 +58,8 @@ begin
         nullif(p->>'email', ''), nullif(p->>'phone', ''), nullif(p->>'facebook', ''), nullif(p->>'jpLevel', ''),
         nullif(p->>'note', ''),
         case when ext is not null then
-          'cvs/' || to_char(now(), 'YYYY/MM') || '/' || new_id || '/' || gen_random_uuid() || '.' || ext end,
+          -- Thư mục theo tháng UTC của created_at: removeApplicationObjects() tính lại được.
+          'cvs/' || to_char(now() at time zone 'UTC', 'YYYY/MM') || '/' || new_id || '/' || gen_random_uuid() || '.' || ext end,
         p->>'cvMime', p->>'consentVersion', now(),
         case when ext is not null then 'pending_upload' else 'new' end,
         p->>'idempotencyKey', p->>'ipHash', (current_date + make_interval(months => coalesce(months, 12)))::date)

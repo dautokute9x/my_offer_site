@@ -51,8 +51,8 @@ export async function startApplication(input: ApplicationInput, ip: string): Pro
   if (data.error) return data.error === "rate_limited" || data.error === "job_closed" ? { error: data.error } : fail("start_application", { message: String(data.error) });
   if (data.status !== "pending_upload") return { id: data.id, refCode: data.refCode };
 
-  // upsert: gửi lại cùng path (vd. đã tải xong nhưng complete lỗi mạng) ghi đè thay vì phải xóa object trước.
-  const { data: up, error: ue } = await sb.storage.from("cvs").createSignedUploadUrl(data.cvPath, { upsert: true });
+  // Không upsert: mỗi lần gửi lại SQL cấp path mới, nên URL cũ không thể ghi đè object đã xác nhận.
+  const { data: up, error: ue } = await sb.storage.from("cvs").createSignedUploadUrl(data.cvPath);
   if (ue || !up) return fail("createSignedUploadUrl", ue);
   return { id: data.id, refCode: data.refCode, upload: { path: up.path, token: up.token, signedUrl: up.signedUrl } };
 }
@@ -95,4 +95,24 @@ export async function completeApplication(id: string, idempotencyKey: string): P
   const { error: ue } = await sb.from("applications").update({ status: "new", cv_size: size }).eq("id", id).eq("status", "pending_upload");
   if (ue) return fail("update", ue);
   return { refCode: row.ref_code };
+}
+
+// Xóa mọi object của hồ sơ (CV hiện tại + path mồ côi của các lần gửi lại). Gọi TRƯỚC khi xóa dòng (cần created_at).
+export async function removeApplicationObjects(id: string): Promise<{ ok: true } | { error: ApplicationError }> {
+  const sb = createAdminSupabase();
+  const { data: row, error } = await sb.from("applications").select("created_at").eq("id", id).maybeSingle();
+  if (error) return fail("select", error);
+  if (!row) return { error: "not_found" };
+  const d = new Date(row.created_at);
+  // Cùng công thức với start_application: cvs/<yyyy>/<mm theo UTC của created_at>/<id>
+  const dir = `cvs/${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${id}`;
+  const bucket = sb.storage.from("cvs");
+  // shortcut: list mặc định tối đa 100 object; mỗi hồ sơ chỉ có vài lần gửi lại nên đủ.
+  const { data: list, error: le } = await bucket.list(dir);
+  if (le) return fail("list", le);
+  if (list?.length) {
+    const { error: re } = await bucket.remove(list.map((o) => `${dir}/${o.name}`));
+    if (re) return fail("remove", re);
+  }
+  return { ok: true };
 }
