@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { filtersToQuery, type JobFilters } from "@/lib/filters";
 import type { Catalog, JpLevel } from "@/lib/types";
@@ -7,14 +7,27 @@ import CheckList from "./CheckList";
 
 const field = "mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-2 text-sm lg:min-h-9";
 
-export default function FilterPanel({ catalog, filters: f, total }: { catalog: Catalog; filters: JobFilters; total: number }) {
+export default function FilterPanel({ catalog, filters: server, total }: { catalog: Catalog; filters: JobFilters; total: number }) {
   const router = useRouter();
+  const [, startTransition] = useTransition();
+  // Bản lạc quan: nhiều cú nhấp liên tiếp cộng dồn và ô tick ngay; đồng bộ lại khi server trả bộ lọc mới.
+  const [f, setF] = useState(server);
+  const [seen, setSeen] = useState(server);
+  if (seen !== server) { setSeen(server); setF(server); }
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const go = (patch: Partial<JobFilters>) => {
-    const qs = filtersToQuery({ ...f, ...patch, page: 1 });
-    router.push(qs ? `/viec-lam?${qs}` : "/viec-lam", { scroll: false });
+    const next = { ...f, ...patch, page: 1 };
+    setF(next);
+    const qs = filtersToQuery(next);
+    startTransition(() => router.push(qs ? `/viec-lam?${qs}` : "/viec-lam", { scroll: false }));
   };
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width:1024px)");
+    const close = () => mq.matches && dialog.current?.close();
+    mq.addEventListener("change", close);
+    return () => mq.removeEventListener("change", close);
+  }, []);
   const count = [f.prefectures, f.groups, f.occupations, f.benefits].reduce((n, a) => n + a.length, 0) +
     [f.salaryMinMan != null || f.salaryMaxMan != null, f.jpLevel, f.maxExperience != null, f.hasInterview].filter(Boolean).length;
   const num = (s: string) => (/^\d{1,6}$/.test(s.trim()) ? Number(s) : null);
@@ -106,7 +119,7 @@ export default function FilterPanel({ catalog, filters: f, total }: { catalog: C
             </label>
           </div>
           <div className="flex gap-2 border-t border-slate-200 p-4 lg:hidden">
-            <button type="button" onClick={() => router.push("/viec-lam", { scroll: false })}
+            <button type="button" onClick={() => startTransition(() => router.push("/viec-lam", { scroll: false }))}
               className="min-h-11 rounded border border-slate-300 px-4 font-semibold">Xóa tất cả</button>
             <button type="button" onClick={() => dialog.current?.close()}
               className="min-h-11 flex-1 rounded bg-brand px-4 font-semibold text-white">Xem {total} kết quả</button>

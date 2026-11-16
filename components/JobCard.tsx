@@ -27,12 +27,15 @@ export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Ca
           Cập nhật {dmy(job.updatedAt)}
         </span>
       </div>
-      <h3 className="text-lg font-bold leading-snug text-navy">
+      <h3 className="text-lg font-bold leading-snug text-navy group-data-[view=poster]/grid:text-xl">
         <Link href={jobHref(job)} className="after:absolute after:inset-0">
           {job.titleVi}
         </Link>
       </h3>
       <p lang="ja" className="text-sm text-slate-600">{job.titleJa}</p>
+      {job.content.summary.vi && (
+        <p className="line-clamp-3 hidden text-sm text-slate-700 group-data-[view=poster]/grid:block">{job.content.summary.vi}</p>
+      )}
       <p className="text-sm">📍 {places.join(", ") || UNCONFIRMED}</p>
       <p className="text-sm">
         💴 {salary || `Lương: ${UNCONFIRMED}`}
