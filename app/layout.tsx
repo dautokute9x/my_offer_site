@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${beVietnam.variable} ${notoJp.variable}`}>
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col max-lg:has-[[data-apply-bar]]:pb-16">
         <DemoBanner />
         <SiteHeader />
         <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8">{children}</main>

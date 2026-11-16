@@ -64,3 +64,5 @@ export function hasActiveFilters(f: JobFilters): boolean {
 }
 
 export const jobHref = (job: Pick<Job, "slug" | "code">) => `/viec-lam/${job.slug}-${job.code}`;
+
+export const codeFromSlugParam = (param: string) => param.slice(param.lastIndexOf("-") + 1);

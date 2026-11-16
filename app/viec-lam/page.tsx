@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCatalog, searchJobs } from "@/lib/data";
 import { filtersToQuery, hasActiveFilters, parseFilters } from "@/lib/filters";
 import JobCard from "@/components/JobCard";
@@ -58,7 +59,7 @@ export default async function JobsPage({ searchParams }: Props) {
                     className="inline-flex min-h-11 items-center rounded bg-brand px-5 font-semibold text-white">Về trang 1</a>
                 )}
                 {hasActiveFilters(f) && (
-                  <a href="/viec-lam" className="inline-flex min-h-11 items-center rounded border border-brand px-5 font-semibold text-brand">Xóa bộ lọc</a>
+                  <Link href="/viec-lam" className="inline-flex min-h-11 items-center rounded border border-brand px-5 font-semibold text-brand">Xóa bộ lọc</Link>
                 )}
               </div>
             </div>
