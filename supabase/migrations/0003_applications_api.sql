@@ -9,16 +9,18 @@ declare
   alphabet constant text := '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   ref text;
   new_id uuid := gen_random_uuid();
+  ext text := nullif(p->>'cvExt', '');
   months int;
 begin
   -- Khóa theo ip_hash: hai request song song cùng IP không cùng lọt qua bước đếm.
   perform pg_advisory_xact_lock(hashtext('start_application:' || (p->>'ipHash')));
-  select * into a from public.applications where idempotency_key = p->>'idempotencyKey';
-  if found then
+  select * into a from public.applications where idempotency_key = p->>'idempotencyKey' for update;
+  -- Đã qua bước tải CV: trả lại nguyên kết quả cũ.
+  if found and a.status <> 'pending_upload' then
     return jsonb_build_object('id', a.id, 'refCode', a.ref_code, 'status', a.status, 'cvPath', a.cv_path, 'created', false);
   end if;
 
-  if (select count(*) from public.applications
+  if a.id is null and (select count(*) from public.applications
       where ip_hash = p->>'ipHash' and created_at > now() - interval '10 minutes') >= 5 then
     return jsonb_build_object('error', 'rate_limited');
   end if;
@@ -27,6 +29,22 @@ begin
     select * into j from public.jobs where lower(code) = public.norm_code(p->>'jobCode')
       and status = 'published' and (valid_through is null or valid_through > now());
     if not found and p->>'kind' = 'apply' then return jsonb_build_object('error', 'job_closed'); end if;
+  end if;
+
+  if a.id is not null then
+    -- Gửi lại khi còn pending_upload (vd. sau invalid_file): ghi đè dữ liệu mới nhập.
+    -- Cùng đuôi giữ path (signed URL upsert ghi đè); đổi đuôi → path mới; không còn CV (chuyển tư vấn) → new.
+    update public.applications set kind = p->>'kind', job_id = j.id, job_code = coalesce(j.code, nullif(p->>'jobCode', '')),
+      job_title = j.title_vi, full_name = p->>'fullName', email = nullif(p->>'email', ''), phone = nullif(p->>'phone', ''),
+      facebook = nullif(p->>'facebook', ''), jp_level = nullif(p->>'jpLevel', ''), note = nullif(p->>'note', ''),
+      consent_version = p->>'consentVersion', consent_at = now(),
+      cv_path = case when ext is null then null
+        when a.cv_path like '%.' || ext then a.cv_path
+        else 'cvs/' || to_char(a.created_at, 'YYYY/MM') || '/' || a.id || '/' || gen_random_uuid() || '.' || ext end,
+      cv_mime = case when ext is not null then p->>'cvMime' end,
+      status = case when ext is null then 'new' else 'pending_upload' end
+    where id = a.id returning * into a;
+    return jsonb_build_object('id', a.id, 'refCode', a.ref_code, 'status', a.status, 'cvPath', a.cv_path, 'created', false);
   end if;
 
   select coalesce((data->>'retentionMonths')::int, 12) into months from public.site_settings where id = 1;
@@ -39,10 +57,10 @@ begin
       values (new_id, ref, p->>'kind', j.id, coalesce(j.code, nullif(p->>'jobCode', '')), j.title_vi, p->>'fullName',
         nullif(p->>'email', ''), nullif(p->>'phone', ''), nullif(p->>'facebook', ''), nullif(p->>'jpLevel', ''),
         nullif(p->>'note', ''),
-        case when p->>'cvExt' is not null then
-          'cvs/' || to_char(now(), 'YYYY/MM') || '/' || new_id || '/' || gen_random_uuid() || '.' || (p->>'cvExt') end,
+        case when ext is not null then
+          'cvs/' || to_char(now(), 'YYYY/MM') || '/' || new_id || '/' || gen_random_uuid() || '.' || ext end,
         p->>'cvMime', p->>'consentVersion', now(),
-        case when p->>'cvExt' is not null then 'pending_upload' else 'new' end,
+        case when ext is not null then 'pending_upload' else 'new' end,
         p->>'idempotencyKey', p->>'ipHash', (current_date + make_interval(months => coalesce(months, 12)))::date)
       on conflict (idempotency_key) do nothing
       returning * into a;
@@ -51,7 +69,7 @@ begin
     end;
   end loop;
 
-  if a.id is null then  -- request song song cùng key vừa ghi trước
+  if a.id is null then  -- request song song cùng key (khác IP) vừa ghi trước
     select * into a from public.applications where idempotency_key = p->>'idempotencyKey';
     return jsonb_build_object('id', a.id, 'refCode', a.ref_code, 'status', a.status, 'cvPath', a.cv_path, 'created', false);
   end if;
@@ -59,3 +77,10 @@ begin
 end $$;
 revoke execute on function start_application(jsonb) from public, anon, authenticated;
 grant execute on function start_application(jsonb) to service_role;
+
+-- Bucket CV: giới hạn 10 MB và loại tệp ngay tại Storage (complete vẫn là chốt chặn thật).
+update storage.buckets set file_size_limit = 10485760, allowed_mime_types = array[
+  'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/zip', 'application/x-zip-compressed', 'application/octet-stream']
+where id = 'cvs';

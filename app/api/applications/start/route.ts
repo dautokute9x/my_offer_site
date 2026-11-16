@@ -34,7 +34,8 @@ export async function POST(request: Request) {
   }
   const input: ApplicationInput = {
     kind: s(raw.kind) as ApplicationInput["kind"],
-    jobCode: s(raw.jobCode) || null,
+    // Tư vấn không bắt buộc mã tin: mã sai định dạng thì bỏ, không báo lỗi.
+    jobCode: s(raw.kind) === "apply" || /^[A-Za-z0-9]{1,20}$/.test(s(raw.jobCode)) ? s(raw.jobCode) || null : null,
     fullName: s(raw.fullName),
     email: s(raw.email),
     phone: s(raw.phone),

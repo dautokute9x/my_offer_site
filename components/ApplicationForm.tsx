@@ -34,7 +34,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
   const keyRef = useRef<string>("");
   const formRef = useRef<HTMLFormElement>(null);
   // randomUUID chỉ có trên ngữ cảnh an toàn (https/localhost); LAN http cần phương án dự phòng.
-  keyRef.current ||= globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+  keyRef.current ||= globalThis.crypto?.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
   const statusRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => { if (done) statusRef.current?.focus(); }, [done]);
   const visible = (k: string) => k === "contact" || k === "kind" || (k === "file" ? apply : FIELDS.includes(k));
@@ -141,8 +141,10 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
         </label>
         {errors.consent && <p id="e-consent" className="mt-1 text-sm font-semibold text-red-800">{errors.consent}</p>}
       </div>
+      {/* Đọc cho trình đọc màn hình theo bước 25% để không đọc liên tục. */}
+      <p aria-live="polite" className="sr-only">{progress !== null ? `Đang tải CV… ${Math.floor(progress / 25) * 25}%` : ""}</p>
       {progress !== null && (
-        <label className="block text-sm font-semibold">
+        <label aria-hidden="true" className="block text-sm font-semibold">
           Đang tải CV… {progress}%
           <progress value={progress} max={100} className="mt-1 block w-full" />
         </label>

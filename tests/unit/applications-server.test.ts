@@ -5,6 +5,7 @@ import type { ApplicationInput } from "@/lib/validate";
 type Row = { id: string; ref_code: string; status: string; cv_path: string | null; idempotency_key: string; cv_size?: number };
 let row: Row | null;
 let object: { size: number; bytes: Uint8Array } | null;
+let onDownload = () => {};
 const rpc = vi.fn();
 const remove = vi.fn(async (paths: string[]) => ({ data: paths, error: null }));
 const createSignedUploadUrl = vi.fn(async (path: string) => ({ data: { path, token: "tok", signedUrl: `https://x/upload/${path}?token=tok` }, error: null }));
@@ -24,7 +25,7 @@ const fake = {
         data: object && row?.cv_path?.endsWith(opts.search) ? [{ name: opts.search, metadata: { size: object.size } }] : [],
         error: null,
       }),
-      download: async () => (object ? { data: new Blob([object.bytes as BlobPart]), error: null } : { data: null, error: { message: "not found" } }),
+      download: async () => (onDownload(), object ? { data: new Blob([object.bytes as BlobPart]), error: null } : { data: null, error: { message: "not found" } }),
     }),
   },
 };
@@ -46,6 +47,7 @@ beforeEach(() => {
   process.env.IP_HASH_SALT = "salt";
   row = { id: ID, ref_code: "HS-ABCDEF", status: "pending_upload", cv_path: PATH, idempotency_key: "k-1" };
   object = { size: pdf.length, bytes: pdf };
+  onDownload = () => {};
 });
 
 describe("completeApplication", () => {
@@ -77,6 +79,12 @@ describe("completeApplication", () => {
     expect(await completeApplication(ID, "k-1")).toEqual({ refCode: "HS-ABCDEF" });
     expect(remove).not.toHaveBeenCalled();
   });
+  it("complete song song đã xác nhận (new) → không xóa object, trả refCode", async () => {
+    object = { size: 2, bytes: new Uint8Array([0x4d, 0x5a]) };
+    onDownload = () => { row!.status = "new"; };
+    expect(await completeApplication(ID, "k-1")).toEqual({ refCode: "HS-ABCDEF" });
+    expect(remove).not.toHaveBeenCalled();
+  });
   it("sai idempotencyKey → not_found", async () => {
     expect(await completeApplication(ID, "khac")).toEqual({ error: "not_found" });
   });
@@ -94,11 +102,11 @@ describe("startApplication", () => {
     expect(r).toEqual({ id: ID, refCode: "HS-ABCDEF", upload: { path: PATH, token: "tok", signedUrl: `https://x/upload/${PATH}?token=tok` } });
     expect(remove).not.toHaveBeenCalled();
   });
-  it("gửi lại hồ sơ đang pending_upload → xóa object cũ, URL mới cùng path", async () => {
+  it("gửi lại hồ sơ đang pending_upload → không xóa object, URL mới upsert", async () => {
     rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "pending_upload", cvPath: PATH, created: false }, error: null });
     const r = await startApplication(input, "1.2.3.4");
-    expect(remove).toHaveBeenCalledWith([PATH]);
-    expect(createSignedUploadUrl).toHaveBeenCalledWith(PATH);
+    expect(remove).not.toHaveBeenCalled();
+    expect(createSignedUploadUrl).toHaveBeenCalledWith(PATH, { upsert: true });
     expect(r).toMatchObject({ upload: { path: PATH } });
   });
   it("hồ sơ đã new → refCode, không upload", async () => {
@@ -109,6 +117,8 @@ describe("startApplication", () => {
   it("lỗi từ SQL / RPC", async () => {
     rpc.mockResolvedValue({ data: { error: "rate_limited" }, error: null });
     expect(await startApplication(input, "1.2.3.4")).toEqual({ error: "rate_limited" });
+    rpc.mockResolvedValue({ data: { error: "la" }, error: null });
+    expect(await startApplication(input, "1.2.3.4")).toEqual({ error: "server_error" });
     rpc.mockResolvedValue({ data: null, error: { code: "X", message: "boom" } });
     expect(await startApplication(input, "1.2.3.4")).toEqual({ error: "server_error" });
   });
@@ -128,5 +138,13 @@ describe("route start", () => {
     startPOST(new Request("http://x/api/applications/start", { method: "POST", body, headers: { "content-type": type } }));
   it("JSON quá 64 KB → 413", async () => expect((await post(JSON.stringify({ note: "x".repeat(70 * 1024) }))).status).toBe(413));
   it("multipart quá 64 KB → 413", async () => expect((await post("x".repeat(70 * 1024), "multipart/form-data; boundary=b")).status).toBe(413));
+  it("tư vấn: jobCode không hợp lệ bị bỏ (null)", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "http://sb";
+    rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "new", cvPath: null, created: true }, error: null });
+    const res = await post(JSON.stringify({ ...input, kind: "consult", jobCode: "a-b", file: null, consent: true }));
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    expect(await res.json()).toEqual({ ok: true, refCode: "HS-ABCDEF" });
+    expect(rpc.mock.calls[0][1].p.jobCode).toBeNull();
+  });
   it("JSON hỏng → 400", async () => expect((await post("{hong")).status).toBe(400));
 });

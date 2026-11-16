@@ -48,16 +48,11 @@ export async function startApplication(input: ApplicationInput, ip: string): Pro
     },
   });
   if (error || !data) return fail("start_application", error);
-  if (data.error) return { error: data.error };
+  if (data.error) return data.error === "rate_limited" || data.error === "job_closed" ? { error: data.error } : fail("start_application", { message: String(data.error) });
   if (data.status !== "pending_upload") return { id: data.id, refCode: data.refCode };
 
-  const bucket = sb.storage.from("cvs");
-  // Gửi lại hồ sơ đang chờ: object cũ (có thể đã tải xong nhưng complete lỗi) chặn PUT x-upsert:false, nên xóa trước.
-  if (!data.created) {
-    const { error: re } = await bucket.remove([data.cvPath]);
-    if (re) return fail("remove", re);
-  }
-  const { data: up, error: ue } = await bucket.createSignedUploadUrl(data.cvPath);
+  // upsert: gửi lại cùng path (vd. đã tải xong nhưng complete lỗi mạng) ghi đè thay vì phải xóa object trước.
+  const { data: up, error: ue } = await sb.storage.from("cvs").createSignedUploadUrl(data.cvPath, { upsert: true });
   if (ue || !up) return fail("createSignedUploadUrl", ue);
   return { id: data.id, refCode: data.refCode, upload: { path: up.path, token: up.token, signedUrl: up.signedUrl } };
 }
@@ -87,6 +82,11 @@ export async function completeApplication(id: string, idempotencyKey: string): P
     ok = kind === EXPECTED[extOf(path)] && (kind !== "zip" || Buffer.from(head).includes("[Content_Types].xml"));
   }
   if (!ok) {
+    // Chỉ xóa khi hồ sơ vẫn pending_upload: complete song song có thể vừa xác nhận object này (đã new) — không được xóa.
+    const { data: now, error: se } = await sb.from("applications").select("ref_code, status, cv_path, idempotency_key").eq("id", id).maybeSingle();
+    if (se) return fail("select", se);
+    if (!now) return { error: "not_found" };
+    if (now.status !== "pending_upload") return { refCode: now.ref_code };
     // Hồ sơ vẫn pending_upload: gửi lại cùng key sẽ nhận signed URL mới.
     const { error: re } = await bucket.remove([path]);
     if (re) return fail("remove", re);

@@ -3,10 +3,10 @@ begin;
 
 insert into jobs (code, slug, status, title_vi, title_ja) values ('closed1', 'closed-1', 'closed', 'Tin đóng', '終了');
 
-create function pg_temp.req(key text, ip text, job text default '00412', kind text default 'apply') returns jsonb language sql as $$
+create function pg_temp.req(key text, ip text, job text default '00412', kind text default 'apply', ext text default 'pdf') returns jsonb language sql as $$
   select jsonb_build_object('idempotencyKey', key, 'ipHash', ip, 'kind', kind, 'jobCode', job, 'fullName', 'Nguyễn Văn A',
-    'phone', '0901234567', 'consentVersion', 'v1', 'cvExt', case when kind = 'apply' then 'pdf' end,
-    'cvMime', case when kind = 'apply' then 'application/pdf' end)
+    'phone', '0901234567', 'consentVersion', 'v1', 'cvExt', case when kind = 'apply' then ext end,
+    'cvMime', case when kind = 'apply' then 'application/' || ext end)
 $$;
 
 set role service_role;
@@ -42,6 +42,23 @@ begin
   update applications set created_at = now() - interval '11 minutes' where ip_hash = 'ip-a';
   if start_application(pg_temp.req('k-7', 'ip-a')) ? 'error' then raise exception 'dòng cũ vẫn bị tính'; end if;
 
+  -- Gửi lại hồ sơ còn pending_upload: cập nhật dữ liệu mới; đổi đuôi → path mới; chuyển sang tư vấn → new.
+  r := start_application(pg_temp.req('k-r', 'ip-r'));
+  b := start_application(pg_temp.req('k-r', 'ip-r', ext => 'docx') || '{"email": "moi@example.vn"}');
+  if b->>'refCode' <> r->>'refCode' or b->>'status' <> 'pending_upload' or b->>'cvPath' = r->>'cvPath'
+     or b->>'cvPath' !~ ('^cvs/\d{4}/\d{2}/' || (r->>'id') || '/[0-9a-f-]{36}\.docx$') then raise exception 'đổi đuôi sai: % / %', r, b; end if;
+  if not exists (select 1 from applications where id = (r->>'id')::uuid and email = 'moi@example.vn'
+      and cv_path = b->>'cvPath' and cv_mime = 'application/docx') then raise exception 'gửi lại không cập nhật dòng'; end if;
+  b := start_application(pg_temp.req('k-r', 'ip-r', ext => 'docx'));
+  if b->>'cvPath' <> (select cv_path from applications where id = (r->>'id')::uuid) then raise exception 'cùng đuôi phải giữ path'; end if;
+  b := start_application(pg_temp.req('k-r', 'ip-r', null, 'consult'));
+  if b->>'status' <> 'new' or b->>'cvPath' is not null or b->>'refCode' <> r->>'refCode' then raise exception 'chuyển tư vấn sai: %', b; end if;
+  if not exists (select 1 from applications where id = (r->>'id')::uuid and kind = 'consult' and status = 'new' and cv_path is null)
+    then raise exception 'dòng chưa chuyển tư vấn'; end if;
+  -- Đã new: gửi lại không đổi gì.
+  b := start_application(pg_temp.req('k-r', 'ip-r') || '{"email": "khac@example.vn"}');
+  if b->>'status' <> 'new' or (select email from applications where id = (r->>'id')::uuid) <> 'moi@example.vn' then raise exception 'dòng new bị sửa: %', b; end if;
+
   r := start_application(pg_temp.req('k-x', 'ip-x', 'closed1'));
   if r->>'error' is distinct from 'job_closed' then raise exception 'tin đóng phải job_closed: %', r; end if;
   r := start_application(pg_temp.req('k-y', 'ip-x', 'khongco'));
@@ -63,6 +80,12 @@ begin
     end;
     reset role;
   end loop;
+end $$;
+
+-- Bucket cvs giới hạn như Supabase.
+do $$ begin
+  if not exists (select 1 from storage.buckets where id = 'cvs' and file_size_limit = 10485760 and not public
+      and allowed_mime_types @> array['application/pdf', 'application/octet-stream']) then raise exception 'bucket cvs chưa giới hạn'; end if;
 end $$;
 
 rollback;
