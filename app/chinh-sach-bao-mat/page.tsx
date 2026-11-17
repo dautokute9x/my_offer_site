@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const h2 = "pt-6 text-[length:var(--text-title)]";
 const list = "list-disc space-y-2 pl-6";
 
-// Nội dung mẫu bám theo Luật 91/2025/QH15 và Nghị định 356/2025/NĐ-CP (hiệu lực 01/01/2026); chủ site cần rà soát pháp lý rồi mới bật policiesConfirmed.
+// Nội dung mẫu bám theo Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP (hiệu lực 01/01/2026) và APPI của Nhật cho phần gửi hồ sơ sang Nhật; chủ site cần rà soát pháp lý rồi mới bật policiesConfirmed.
 export default async function Page() {
   const s = await getSiteSettings();
   const { policiesConfirmed, retentionMonths } = s;
@@ -63,21 +63,37 @@ export default async function Page() {
 
       <h2 className={h2}>4. Nơi lưu trữ và chuyển dữ liệu ra nước ngoài</h2>
       <p>
-        Dữ liệu và CV được lưu trên dịch vụ đám mây (Supabase, Vercel) có máy chủ đặt ngoài Việt Nam. Theo quy định, việc lưu trữ này được
-        coi là chuyển dữ liệu cá nhân ra nước ngoài. CV nằm trong kho lưu trữ riêng tư: người ngoài không truy cập được, quản trị viên chỉ
+        Dữ liệu và CV được lưu trên dịch vụ đám mây đặt ngoài Việt Nam: máy chủ cơ sở dữ liệu tại Ấn Độ (Supabase, khu vực Mumbai) và
+        máy chủ web của Vercel (mặc định tại Hoa Kỳ). Theo quy định, việc lưu trữ này được coi là chuyển dữ liệu cá nhân ra nước ngoài. CV nằm trong kho lưu trữ riêng tư: người ngoài không truy cập được, quản trị viên chỉ
         mở được qua liên kết tạm thời có hiệu lực 60 giây.
       </p>
-      <p>Khi hồ sơ được gửi cho nhà tuyển dụng tại Nhật Bản, dữ liệu cũng được chuyển sang Nhật Bản.</p>
 
-      <h2 className={h2}>5. Thời hạn lưu và xóa</h2>
+      <h2 className={h2}>5. Khi hồ sơ được gửi sang Nhật Bản</h2>
+      <p>
+        Trước khi gửi hồ sơ cho một nhà tuyển dụng tại Nhật Bản, chúng tôi cho bạn biết tên nhà tuyển dụng và chỉ gửi khi bạn đồng ý.
+        Tại Nhật Bản, nhà tuyển dụng xử lý dữ liệu của bạn theo Luật Bảo vệ thông tin cá nhân của Nhật Bản (APPI, 個人情報保護法),
+        do Ủy ban Bảo vệ thông tin cá nhân (PPC) giám sát. Theo APPI:
+      </p>
+      <ul className={list}>
+        <li>nhà tuyển dụng phải công bố hoặc thông báo cho bạn mục đích sử dụng và chỉ dùng dữ liệu trong phạm vi đó;</li>
+        <li>không được cung cấp dữ liệu của bạn cho bên thứ ba khi chưa có sự đồng ý của bạn, trừ trường hợp luật cho phép;</li>
+        <li>nếu chuyển tiếp dữ liệu ra nước khác, phải cho bạn biết tên nước, chế độ bảo vệ dữ liệu của nước đó và biện pháp bảo vệ của bên nhận trước khi xin đồng ý;</li>
+        <li>khi xảy ra sự cố rò rỉ thuộc diện phải báo cáo, phải báo cáo PPC và thông báo cho bạn;</li>
+        <li>bạn có quyền yêu cầu họ công khai, chỉnh sửa, ngừng sử dụng hoặc xóa dữ liệu của bạn theo thủ tục của APPI.</li>
+      </ul>
+      <p>
+        Nếu cần hỗ trợ khi làm việc với nhà tuyển dụng tại Nhật về dữ liệu của mình, bạn có thể liên hệ chúng tôi qua các kênh ở mục 1.
+      </p>
+
+      <h2 className={h2}>6. Thời hạn lưu và xóa</h2>
       <ul className={list}>
         <li>Hồ sơ được lưu tối đa {retentionMonths} tháng kể từ ngày gửi, sau đó bị xóa cùng CV.</li>
         <li>Nếu bạn không trúng tuyển hoặc rút hồ sơ, hồ sơ và CV sẽ bị xóa, trừ khi bạn đồng ý để chúng tôi lưu lại.</li>
         <li>Hồ sơ gửi dở (chưa tải xong CV) bị xóa sau 24 giờ.</li>
-        <li>Bạn có thể yêu cầu xóa bất cứ lúc nào (xem mục 6).</li>
+        <li>Bạn có thể yêu cầu xóa bất cứ lúc nào (xem mục 7).</li>
       </ul>
 
-      <h2 className={h2}>6. Quyền của bạn</h2>
+      <h2 className={h2}>7. Quyền của bạn</h2>
       <p>Theo Luật Bảo vệ dữ liệu cá nhân, bạn có quyền:</p>
       <ul className={list}>
         <li>được biết về việc xử lý dữ liệu cá nhân của mình;</li>
@@ -93,13 +109,13 @@ export default async function Page() {
         đến việc xử lý đã thực hiện trước đó; sau khi bạn rút lại, hồ sơ sẽ bị xóa.
       </p>
 
-      <h2 className={h2}>7. Bảo vệ dữ liệu và sự cố</h2>
+      <h2 className={h2}>8. Bảo vệ dữ liệu và sự cố</h2>
       <p>
         Chỉ quản trị viên đã đăng nhập mới xem được hồ sơ; quyền truy cập được kiểm tra ở máy chủ và trong cơ sở dữ liệu. Khi phát hiện sự cố
         lộ, mất dữ liệu cá nhân, chúng tôi sẽ thông báo cho cơ quan chuyên trách bảo vệ dữ liệu cá nhân và cho bạn theo quy định.
       </p>
 
-      <h2 className={h2}>8. Thay đổi chính sách</h2>
+      <h2 className={h2}>9. Thay đổi chính sách</h2>
       <p>
         Khi chính sách thay đổi, phiên bản mới được đăng trên trang này. Mỗi hồ sơ lưu lại phiên bản nội dung mà người gửi đã đồng ý.
       </p>

@@ -56,7 +56,7 @@ Deploy. Biến `NEXT_PUBLIC_*` được gắn vào mã lúc build: đổi giá t
 
 Các mục này cũng kiểm các giới hạn chưa chứng minh được ở README (đăng nhập Auth, PUT signed URL, `list()` metadata.size, PostgREST, RLS thật). Lỗi ở đây cần xử lý trước khi nhận hồ sơ thật.
 
-## Bảo vệ dữ liệu cá nhân (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP)
+## Bảo vệ dữ liệu cá nhân (Việt Nam: Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP; Nhật Bản: APPI)
 
 Luật Bảo vệ dữ liệu cá nhân và Nghị định 356/2025/NĐ-CP có hiệu lực từ 01/01/2026, thay Nghị định 13/2023. Website đã có sẵn: chính sách bảo mật mẫu, ô đồng ý ghi rõ mục đích và nơi lưu, lưu phiên bản đồng ý theo từng hồ sơ, xóa hồ sơ theo yêu cầu, dọn hồ sơ quá hạn và hồ sơ không trúng tuyển (Điều 25). Phần dưới là việc **chủ site phải tự làm**; danh sách này không thay cho tư vấn pháp lý.
 
@@ -66,6 +66,15 @@ Luật Bảo vệ dữ liệu cá nhân và Nghị định 356/2025/NĐ-CP có h
 - [ ] Ký thỏa thuận xử lý dữ liệu với nhà tuyển dụng tại Nhật trước khi gửi hồ sơ ứng viên cho họ.
 - [ ] Quy trình nhận yêu cầu của ứng viên (xem, sửa, xóa, rút lại đồng ý): xác minh qua mã hồ sơ `HS-xxxxxx`, xử lý trong thời hạn luật định; xóa ở `/admin/ho-so/[id]` → **Xóa hồ sơ**.
 - [ ] Quy trình xử lý sự cố lộ, mất dữ liệu: ai phát hiện, ai thông báo cơ quan chuyên trách và ứng viên.
+- [ ] Nếu đổi khu vực máy chủ Supabase hoặc Vercel, sửa tên nước ở mục 4 của `/chinh-sach-bao-mat` (hiện ghi Ấn Độ, khu vực Mumbai, và Hoa Kỳ).
+
+**Phía Nhật Bản (APPI, 個人情報保護法)** khi hồ sơ được gửi cho nhà tuyển dụng tại Nhật:
+
+- [ ] Thỏa thuận với nhà tuyển dụng ghi rõ: chỉ dùng hồ sơ cho việc tuyển dụng đó, không cung cấp cho bên thứ ba khi ứng viên chưa đồng ý, xóa hồ sơ khi không tuyển, báo ngay cho bạn khi có sự cố.
+- [ ] Trước mỗi lần gửi hồ sơ: báo ứng viên tên nhà tuyển dụng và lấy đồng ý (website đã cam kết điều này ở mục 5 chính sách).
+- [ ] Nếu đơn vị vận hành website là pháp nhân Nhật Bản, hoặc có văn phòng tại Nhật xử lý hồ sơ: APPI áp dụng trực tiếp. Cần chính sách bảo mật tiếng Nhật, công bố mục đích sử dụng, thủ tục nhận yêu cầu công khai, sửa, ngừng sử dụng, và quy trình báo cáo sự cố với PPC (các bài tổng hợp nêu: báo cáo sơ bộ khoảng 3–5 ngày, báo cáo chính thức trong 30 ngày, 60 ngày nếu do hành vi cố ý).
+- [ ] Luật sửa đổi APPI (Luật số 56 năm 2026) đã được ban hành, hiệu lực theo từng giai đoạn: kiểm tra lại các mốc với PPC khi có hiệu lực.
+- [ ] Ngoài bảo vệ dữ liệu: kiểm tra giấy phép giới thiệu việc làm tại Nhật (職業安定法, giấy phép 有料職業紹介事業) và quy định của Việt Nam về đưa người lao động đi làm việc ở nước ngoài (Luật 69/2020/QH14), nếu mô hình kinh doanh của bạn thuộc diện phải có giấy phép.
 - [ ] Chuyển hồ sơ không trúng tuyển sang trạng thái **Không phù hợp** và dọn định kỳ (mục dưới), trừ khi ứng viên đồng ý cho lưu lại.
 
 ## Dọn hồ sơ quá hạn lưu
