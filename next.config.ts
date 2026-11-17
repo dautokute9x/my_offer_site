@@ -3,7 +3,7 @@ import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
 const nextConfig: NextConfig = {
   // Tệp CSV tối đa 2 MB + phần thừa của multipart/mã hóa; kiểm tra byte chính xác nằm ở server action.
-  experimental: { serverActions: { bodySizeLimit: "3mb" } },
+  experimental: { serverActions: { bodySizeLimit: "3mb" }, globalNotFound: true },
   async headers() {
     return [{
       source: "/:path*",

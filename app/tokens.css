@@ -27,8 +27,8 @@
   --color-accent-2: oklch(40% 0.21 25);
   --color-accent-ink: oklch(18% 0.080 20);
   --color-focus: oklch(40% 0.21 25);
-  --font-display: var(--font-big-shoulders), "Big Shoulders", Impact, var(--font-noto-jp), sans-serif;
-  --font-body: var(--font-be-vietnam), "Be Vietnam Pro", var(--font-noto-jp), system-ui, sans-serif;
+  --font-display: var(--font-big-shoulders), "Big Shoulders", Impact, var(--font-noto-jp), var(--font-noto-sc), var(--font-noto-deva), sans-serif;
+  --font-body: var(--font-be-vietnam), "Be Vietnam Pro", var(--font-noto-jp), var(--font-noto-sc), var(--font-noto-deva), system-ui, sans-serif;
   --font-outlier: var(--font-body);
   --radius-card: 2px;
   --radius-pill: 2px;

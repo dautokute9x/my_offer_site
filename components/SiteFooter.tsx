@@ -2,10 +2,12 @@ import Link from "next/link";
 import { getSiteSettings } from "@/lib/data";
 import { contactLinks } from "@/lib/contact";
 import { PHOTOS } from "@/lib/photos";
+import { localePath } from "@/lib/i18n/config";
+import { getT } from "@/lib/i18n/server";
 
 export default async function SiteFooter() {
-  const s = await getSiteSettings();
-  const items = contactLinks(s);
+  const [s, { lang, t }] = await Promise.all([getSiteSettings(), getT()]);
+  const items = contactLinks(s, t.contactLabels);
   return (
     <footer className="band-b">
       <div className="wrap grid gap-10 py-16 md:grid-cols-12">
@@ -28,19 +30,19 @@ export default async function SiteFooter() {
         </dl>
         <ul className="space-y-2 text-sm md:col-span-2">
           <li>
-            <Link href="/chinh-sach-bao-mat" className="whitespace-nowrap underline decoration-paper-2 underline-offset-4 hover:decoration-paper">
-              Chính sách bảo mật
+            <Link href={localePath(lang, "/chinh-sach-bao-mat")} className="whitespace-nowrap underline decoration-paper-2 underline-offset-4 hover:decoration-paper">
+              {t.footer.privacy}
             </Link>
           </li>
           <li>
-            <Link href="/dieu-khoan" className="whitespace-nowrap underline decoration-paper-2 underline-offset-4 hover:decoration-paper">
-              Điều khoản sử dụng
+            <Link href={localePath(lang, "/dieu-khoan")} className="whitespace-nowrap underline decoration-paper-2 underline-offset-4 hover:decoration-paper">
+              {t.footer.terms}
             </Link>
           </li>
         </ul>
       </div>
       <p className="wrap border-t-2 border-paper/30 py-6 text-xs text-paper-2">
-        Ảnh minh họa (Wikimedia Commons):{" "}
+        {t.footer.photoCredits}{" "}
         {Object.values(PHOTOS).map((p, i) => (
           <span key={p.src}>
             {i > 0 && ", "}

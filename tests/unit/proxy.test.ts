@@ -40,3 +40,29 @@ describe("proxy /admin", () => {
     expect(created).not.toHaveBeenCalled();
   });
 });
+
+describe("proxy ngôn ngữ", () => {
+  it("URL tiếng Việt không tiền tố → rewrite nội bộ sang /vi", async () => {
+    const r = await run("/viec-lam?q=00412");
+    expect(r.headers.get("location")).toBeNull();
+    expect(new URL(r.headers.get("x-middleware-rewrite")!).pathname).toBe("/vi/viec-lam");
+    expect(new URL(r.headers.get("x-middleware-rewrite")!).search).toBe("?q=00412");
+  });
+  it("/ → /vi", async () => {
+    expect(new URL((await run("/")).headers.get("x-middleware-rewrite")!).pathname).toBe("/vi");
+  });
+  it.each([["/vi/viec-lam", "/viec-lam"], ["/vi", "/"]])("%s → 308 về %s (không trùng URL)", async (from, to) => {
+    const r = await run(from);
+    expect(r.status).toBe(308);
+    expect(new URL(r.headers.get("location")!).pathname).toBe(to);
+  });
+  it.each(["/en/viec-lam", "/ja", "/fil/lien-he", "/hi", "/zh/lich-phong-van"])("%s đi thẳng, không rewrite", async (p) => {
+    const r = await run(p);
+    expect(r.headers.get("location")).toBeNull();
+    expect(r.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+  it("/admin không bị thêm tiền tố ngôn ngữ", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    expect((await run("/admin")).headers.get("x-middleware-rewrite")).toBeNull();
+  });
+});

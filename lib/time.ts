@@ -1,4 +1,12 @@
-const WEEKDAYS = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+// Cách viết ngày giờ theo ngôn ngữ; mặc định tiếng Việt. Bản dịch nằm ở từ điển (messages.*.dates).
+export type DateWords = { weekdays: string[]; date: string; jst: string; vn: string };
+export const DATES_VI: DateWords = {
+  weekdays: ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
+  date: "{d}/{m}/{y}",
+  jst: "giờ Nhật (JST, UTC+9)",
+  vn: "giờ Việt Nam (UTC+7)",
+};
+const dmy = (W: DateWords, p: { d: string; m: string; y: string }) => W.date.replace("{d}", p.d).replace("{m}", p.m).replace("{y}", p.y);
 
 function parts(date: Date, timeZone: string) {
   const f = new Intl.DateTimeFormat("en-US", {
@@ -10,14 +18,14 @@ function parts(date: Date, timeZone: string) {
   return { y: p.year, m: p.month, d: p.day, hh: p.hour, mm: p.minute, weekday };
 }
 
-export function formatJst(iso: string): string {
+export function formatJst(iso: string, W: DateWords = DATES_VI): string {
   const p = parts(new Date(iso), "Asia/Tokyo");
-  return `${WEEKDAYS[p.weekday]}, ${p.d}/${p.m}/${p.y} · ${p.hh}:${p.mm} giờ Nhật (JST, UTC+9)`;
+  return `${W.weekdays[p.weekday]}, ${dmy(W, p)} · ${p.hh}:${p.mm} ${W.jst}`;
 }
 
-export function formatVn(iso: string): string {
+export function formatVn(iso: string, W: DateWords = DATES_VI): string {
   const p = parts(new Date(iso), "Asia/Ho_Chi_Minh");
-  return `${p.d}/${p.m}/${p.y} · ${p.hh}:${p.mm} giờ Việt Nam (UTC+7)`;
+  return `${dmy(W, p)} · ${p.hh}:${p.mm} ${W.vn}`;
 }
 
 export function jstDateKey(iso: string): string {
@@ -37,9 +45,9 @@ export function jstTodayKey(now: Date = new Date()): string {
 }
 
 // "2026-11-20" -> "Thứ Sáu, 20/11/2026"
-export function dayHeading(dateKey: string): string {
+export function dayHeading(dateKey: string, W: DateWords = DATES_VI): string {
   const [y, m, d] = dateKey.split("-");
-  return `${WEEKDAYS[new Date(Date.UTC(+y, +m - 1, +d)).getUTCDay()]}, ${d}/${m}/${y}`;
+  return `${W.weekdays[new Date(Date.UTC(+y, +m - 1, +d)).getUTCDay()]}, ${dmy(W, { d, m, y })}`;
 }
 
 // Tham số ?tu=/?den= dạng YYYY-MM-DD có thật (bỏ 2026-02-30); lặp lại thì lấy giá trị đầu.
