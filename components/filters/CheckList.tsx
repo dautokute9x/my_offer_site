@@ -1,8 +1,8 @@
 "use client";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { normText } from "@/lib/normalize";
 
-export type CheckItem = { value: string; label: string; search: string; group: string };
+export type CheckItem = { value: string; label: ReactNode; search: string; group: string };
 export type CheckGroup = { key: string; label: string; toggle?: { checked: boolean; onChange: (on: boolean) => void } };
 
 // Một nhóm checkbox có ô tìm kiếm (theo normText, gồm alias) và tiêu đề nhóm tùy chọn.

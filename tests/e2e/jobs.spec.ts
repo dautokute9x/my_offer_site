@@ -81,3 +81,12 @@ test("lương trên thẻ không có tiền tố 'Tháng'/'Năm' thừa", async 
   expect(txt).toMatch(/万円\/tháng/);
   expect(txt).not.toMatch(/(Tháng|Năm) (Từ|Đến|\d)/);
 });
+
+test("đổi sắp xếp áp dụng ngay, không cần bấm Tìm; desktop không có dialog bộ lọc", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/viec-lam?tinh=13");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByLabel("Sắp xếp").selectOption("luong");
+  await expect(page).toHaveURL(/sx=luong/);
+  await expect(page).toHaveURL(/tinh=13/);
+});

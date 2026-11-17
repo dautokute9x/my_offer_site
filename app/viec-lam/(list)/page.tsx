@@ -7,6 +7,7 @@ import Pagination from "@/components/Pagination";
 import ViewToggle from "@/components/ViewToggle";
 import ActiveChips from "@/components/filters/ActiveChips";
 import FilterPanel from "@/components/filters/FilterPanel";
+import { JobsNav, JobsResults, SortSelect } from "@/components/filters/JobsNav";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -27,7 +28,7 @@ export default async function JobsPage({ searchParams }: Props) {
   const sorts = [["moi", "Mới cập nhật"], ["pv", "Lịch phỏng vấn gần nhất"], ["luong", "Lương cao nhất"]];
   return (
     // Thứ tự DOM: tìm kiếm trước bộ lọc (bàn phím); lưới CSS giữ sidebar bên trái ở lg.
-    <div className="grid gap-4 lg:grid-cols-[18rem_1fr] lg:gap-x-6">
+    <JobsNav className="grid gap-4 lg:grid-cols-[18rem_1fr] lg:gap-x-6">
       <section className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
         <h1 className="text-2xl font-bold text-navy">Việc làm kỹ sư tại Nhật</h1>
         <form action="/viec-lam" method="get" className="flex flex-wrap items-end gap-2">
@@ -40,9 +41,9 @@ export default async function JobsPage({ searchParams }: Props) {
               className="mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-3 font-normal" />
           </label>
           <label className="text-sm font-semibold text-navy">Sắp xếp
-            <select name="sx" defaultValue={f.sort} className="mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-2 font-normal">
+            <SortSelect defaultValue={f.sort} className="mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-2 font-normal">
               {sorts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
+            </SortSelect>
           </label>
           <button className="min-h-11 rounded bg-brand px-5 font-semibold text-white">Tìm</button>
         </form>
@@ -50,7 +51,7 @@ export default async function JobsPage({ searchParams }: Props) {
       <aside className="lg:sticky lg:top-4 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
         <FilterPanel catalog={catalog} filters={f} total={total} />
       </aside>
-      <section className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-2">
+      <JobsResults className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-2">
         <ActiveChips filters={f} catalog={catalog} />
         <ViewToggle summary={<p role="status" className="font-semibold">Tìm thấy {total} việc làm</p>}>
           {items.length === 0 ? (
@@ -73,7 +74,7 @@ export default async function JobsPage({ searchParams }: Props) {
           )}
         </ViewToggle>
         {f.page <= pageCount && <Pagination filters={f} pageCount={pageCount} />}
-      </section>
-    </div>
+      </JobsResults>
+    </JobsNav>
   );
 }
