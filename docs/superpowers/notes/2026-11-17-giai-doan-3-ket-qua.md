@@ -49,6 +49,28 @@ Nhánh `feature/website-v1`, ngày 17/11/2026. Chưa có dự án Supabase thậ
 | 12 | Dùng được trên điện thoại và bàn phím | Đạt | e2e, kiểm tra tràn ngang, axe, bàn phím |
 | 13 | Không lỗi build hoặc runtime nghiêm trọng | Đạt | build, không có lỗi console |
 
+## Kiểm tra trên Supabase thật (17/11/2026)
+
+Dự án `vvodzqhzqncacgvuuosg` (ap-south-1, Postgres 17). Chủ site tự chạy migration 0001–0006, seed danh mục, seed demo và tạo 1 quản trị viên trong SQL Editor; kiểm qua Management API:
+
+| Hạng mục | Kết quả |
+|---|---|
+| Đủ 6 migration (cột `upload_attempts`, index 0006, bucket `cvs` 10 MB + MIME) | đạt |
+| `has_schema_privilege('authenticated','public','CREATE')` | `false` (đạt) |
+| RLS bật trên 15/15 bảng `public` | đạt |
+| `start_application`: anon và authenticated không gọi được | đạt |
+| Ẩn danh đọc `applications`, `application_notes`, `admins` qua REST | bị từ chối (42501) |
+| Ẩn danh ghi `applications` / sửa `jobs` | bị từ chối / 0 dòng |
+| Ẩn danh liệt kê hoặc tải lên bucket `cvs` | rỗng / bị RLS chặn |
+| RPC `search_jobs`, bộ lọc PostgREST `.or()` | hoạt động |
+| Web (publishable key) đọc dữ liệu thật: trang chủ, danh sách, lọc, chi tiết, lịch, sitemap | 200, đúng dữ liệu |
+| `/admin` khi chưa đăng nhập | chuyển sang `/admin/login?next=/admin` |
+
+Ghi chú:
+- Supabase mặc định cấp `TRUNCATE` trên các bảng cho `anon`/`authenticated`; PostgREST không có lệnh TRUNCATE nên không khai thác được qua API, chỉ ghi nhận.
+- Khóa kiểu mới (`sb_publishable_…`) dùng được ở biến `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Chạy Node sau proxy của môi trường cloud cần `NODE_USE_ENV_PROXY=1` và `NODE_EXTRA_CA_CERTS`; trên Vercel không cần.
+
 ## Còn lại
 
 Cần dự án Supabase thật (chạy `docs/huong-dan-trien-khai.md` mục 9):
