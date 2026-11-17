@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCatalog, getSiteSettings, listUpcomingInterviews } from "@/lib/data";
 import { jobHref } from "@/lib/filters";
-import { dayHeading, formatJst, formatVn, jstDateKey } from "@/lib/time";
+import { dayHeading, formatJst, formatVn, jstDateKey, parseDateKey } from "@/lib/time";
 import TimezoneToggle from "@/components/TimezoneToggle";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -11,15 +11,11 @@ type Props = { searchParams: Promise<SP> };
 // Chấp nhận tham số lặp lại (checkbox) lẫn dấu phẩy; giá trị ngoài danh sách bị bỏ.
 const multi = (v: SP[string], allowed: Set<string>) =>
   [...new Set([v ?? []].flat().flatMap((x) => x.split(",")).map((x) => x.trim()).filter((x) => allowed.has(x)))];
-const date = (v: SP[string]) => {
-  const s = [v ?? []].flat()[0] ?? "";
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s) ? s : undefined;
-};
 
 async function parse(sp: SP) {
   const c = await getCatalog();
   return {
-    from: date(sp.tu), to: date(sp.den),
+    from: parseDateKey(sp.tu), to: parseDateKey(sp.den),
     prefectures: multi(sp.tinh, new Set(c.prefectures.map((p) => p.code))),
     occupations: multi(sp.nghe, new Set(c.occupations.map((o) => o.slug))),
     catalog: c,
@@ -52,7 +48,7 @@ export default async function InterviewSchedulePage({ searchParams }: Props) {
       </summary>
       <div className="max-h-56 overflow-y-auto px-3 pb-2">
         {items.map((i) => (
-          <label key={i.value} className="flex min-h-9 items-center gap-2 text-sm">
+          <label key={i.value} className="flex min-h-11 items-center gap-2 text-sm">
             <input type="checkbox" name={name} value={i.value} defaultChecked={sel.includes(i.value)} />
             {i.label}
           </label>

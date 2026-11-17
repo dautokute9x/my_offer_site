@@ -10,6 +10,8 @@ describe("formatYenRange", () => {
     expect(formatYenRange(null, 300000, "month")).toBe("Đến 30 万円/tháng");
     expect(formatYenRange(null, null, "month")).toBeNull();
     expect(formatYenRange(215500, null, "month")).toBe("Từ 21,55 万円/tháng");
+    expect(formatYenRange(333333, null, "month")).toBe("Từ 33,33 万円/tháng");
+    expect(formatYenRange(null, 3333333, "year")).toBe("Đến 333,33 万円/năm");
   });
   it("shows a single value when min equals max", () => {
     expect(formatYenRange(250000, 250000, "month")).toBe("25 万円/tháng");

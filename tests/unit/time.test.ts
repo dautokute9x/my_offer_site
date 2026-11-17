@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatJst, formatVn, jstDateKey, jstToIso, jstTodayKey, dayHeading } from "@/lib/time";
+import { formatJst, formatVn, jstDateKey, jstToIso, jstTodayKey, dayHeading, parseDateKey } from "@/lib/time";
 
 describe("time", () => {
   it("formats JST and VN", () => {
@@ -12,11 +12,24 @@ describe("time", () => {
     expect(jstDateKey("2026-11-19T16:00:00Z")).toBe("2026-11-20");
     expect(formatVn("2026-11-20T12:30:00Z")).toBe("20/11/2026 · 19:30 giờ Việt Nam (UTC+7)");
   });
+  it("00:30 JST is the next calendar day vs UTC/VN", () => {
+    expect(formatJst("2026-11-19T15:30:00Z")).toBe("Thứ Sáu, 20/11/2026 · 00:30 giờ Nhật (JST, UTC+9)");
+    expect(formatVn("2026-11-19T15:30:00Z")).toBe("19/11/2026 · 22:30 giờ Việt Nam (UTC+7)");
+    expect(jstDateKey("2026-11-19T15:30:00Z")).toBe("2026-11-20");
+  });
   it("converts JST keys", () => {
     expect(jstToIso("2026-11-20", "10:00")).toBe("2026-11-20T01:00:00.000Z");
     expect(jstTodayKey(new Date("2026-11-19T16:00:00Z"))).toBe("2026-11-20");
   });
   it("day heading", () => {
     expect(dayHeading("2026-11-20")).toBe("Thứ Sáu, 20/11/2026");
+  });
+  it("parses interview date params", () => {
+    expect(parseDateKey("2026-11-20")).toBe("2026-11-20");
+    expect(parseDateKey(["2026-11-20", "2026-12-01"])).toBe("2026-11-20");
+    expect(parseDateKey("2028-02-29")).toBe("2028-02-29");
+    for (const bad of [undefined, "", "2026-02-30", "2026-13-01", "2026-1-5", "20/11/2026", "2026-11-20T00:00"]) {
+      expect(parseDateKey(bad)).toBeUndefined();
+    }
   });
 });
