@@ -19,6 +19,9 @@ describe("time", () => {
   });
   it("converts JST keys", () => {
     expect(jstToIso("2026-11-20", "10:00")).toBe("2026-11-20T01:00:00.000Z");
+    // ngày/giờ không tồn tại: báo lỗi thay vì lăn sang 02/03
+    expect(() => jstToIso("2026-02-30", "10:00")).toThrow(RangeError);
+    expect(() => jstToIso("2026-11-20", "24:00")).toThrow(RangeError);
     expect(jstTodayKey(new Date("2026-11-19T16:00:00Z"))).toBe("2026-11-20");
   });
   it("day heading", () => {

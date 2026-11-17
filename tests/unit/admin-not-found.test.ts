@@ -17,10 +17,10 @@ function builder(table: string) {
   return b;
 }
 vi.mock("@/lib/auth", () => ({ requireAdmin: async () => ({ userId: "u1" }) }));
-vi.mock("@/lib/data", () => ({ getCatalog: async () => ({}) }));
+vi.mock("@/lib/data", () => ({ getCatalog: async () => ({}), SITE_DATA_TAG: "site-data" }));
 vi.mock("@/lib/admin/job-input", () => ({ formToRaw: () => ({ code: "A1" }), normalizeJobInput: () => ({ job: { slug: "s", code: "A1" } }) }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabase: async () => ({ from: builder, rpc: async () => rpcResult }) }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), updateTag: vi.fn(), unstable_cache: (fn: () => unknown) => fn }));
 vi.mock("next/navigation", () => ({ redirect: (u: string) => { throw new Error(`REDIRECT ${u}`); } }));
 
 const fd = (o: Record<string, string>) => Object.entries(o).reduce((f, [k, v]) => (f.set(k, v), f), new FormData());

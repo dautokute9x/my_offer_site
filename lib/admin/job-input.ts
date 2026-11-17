@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { normText } from "@/lib/normalize";
-import { jstToIso } from "@/lib/time";
+import { isDateKey, jstToIso } from "@/lib/time";
 import type { Catalog } from "@/lib/types";
 
 export type Raw = Record<string, string | string[]>;
@@ -79,9 +79,7 @@ export function normalizeJobInput(raw: Raw, catalog: Catalog, opts: { salaryUnpa
   const ts = str(raw.translationStatus) || "none";
   if (!["none", "unreviewed", "approved"].includes(ts)) errors.translationStatus = "Trạng thái bản dịch không hợp lệ.";
   const vt = str(raw.validThrough);
-  // Round-trip để loại ngày không tồn tại (2026-02-30, 2026-13-45) trước khi jstToIso ném RangeError.
-  if (vt && !(/^\d{4}-\d{2}-\d{2}$/.test(vt) && !Number.isNaN(Date.parse(vt)) && new Date(vt).toISOString().slice(0, 10) === vt))
-    errors.validThrough = "Ngày không hợp lệ.";
+  if (vt && !isDateKey(vt)) errors.validThrough = "Ngày không hợp lệ.";
 
   if (Object.keys(errors).length) return { errors };
 

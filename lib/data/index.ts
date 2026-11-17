@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { demoCatalog } from "@/lib/demo/catalog";
 import type { JobFilters } from "@/lib/filters";
@@ -12,7 +13,11 @@ export function isDemoMode(): boolean {
 }
 
 // cache(): nhớ theo request (vd. trang chi tiết gọi getJobByCode ở generateMetadata và ở trang chỉ tốn một RPC).
-export const getCatalog = cache(async () => (isDemoMode() ? demoCatalog : sb.getCatalog()));
+// Danh mục + cài đặt hiếm khi đổi: nhớ giữa các request 5 phút; admin lưu thì updateTag(SITE_DATA_TAG) xóa ngay.
+export const SITE_DATA_TAG = "site-data";
+const shared = <T,>(key: string, fn: () => Promise<T>) => unstable_cache(fn, [key], { tags: [SITE_DATA_TAG], revalidate: 300 })();
+
+export const getCatalog = cache(async () => (isDemoMode() ? demoCatalog : shared("catalog", sb.getCatalog)));
 
 export const searchJobs = cache(async (f: JobFilters, opts: { simulateError?: boolean; now?: Date } = {}) => {
   if (opts.simulateError && isDemoMode()) throw new Error("Lỗi tải dữ liệu (demo_error)");
@@ -26,4 +31,4 @@ export const listUpcomingInterviews = cache((...a: Parameters<typeof demo.listUp
 export const countOpenJobsByGroup = cache(() => (isDemoMode() ? demo.countOpenJobsByGroup() : sb.countOpenJobsByGroup()));
 
 export const getSiteSettings = cache(async (): Promise<SiteSettings> =>
-  isDemoMode() ? siteDefaults : { ...siteDefaults, ...(await sb.getSiteSettings()) });
+  isDemoMode() ? siteDefaults : { ...siteDefaults, ...(await shared("site-settings", sb.getSiteSettings)) });

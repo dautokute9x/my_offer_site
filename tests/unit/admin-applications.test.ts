@@ -29,7 +29,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminSupabase: () => { adminCreated(); return { storage: { from: () => ({ createSignedUrl }) } }; },
 }));
 vi.mock("@/lib/applications/server", () => ({ removeApplicationObjects: (...a: unknown[]) => removeObjects(...a), removeObjectsAt: (...a: unknown[]) => removeAt(...a) }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), updateTag: vi.fn(), unstable_cache: (fn: () => unknown) => fn }));
 vi.mock("next/navigation", () => ({ redirect: (u: string) => { throw new Error(`REDIRECT ${u}`); } }));
 
 const fd = (o: Record<string, string>) => Object.entries(o).reduce((f, [k, v]) => (f.set(k, v), f), new FormData());
@@ -106,6 +106,12 @@ describe("actions", () => {
     expect(r.error).toBeTruthy();
     expect(calls.some((c) => c.op === "applications.delete")).toBe(false);
   });
+  it("delete: CV đã xóa nhưng xóa dòng lỗi → báo đúng, không nói CV còn", async () => {
+    results = [(op, ctx) => (ctx.includes("delete") ? { data: null, error: { code: "57014", message: "timeout" } } : { data: { ref_code: "HS-ABCDEF" }, error: null })];
+    removeObjects.mockResolvedValue({ ok: true });
+    const r = await (await load()).deleteApplication({}, fd({ id: ID, confirm: "HS-ABCDEF" }));
+    expect(r.error).toMatch(/Đã xóa CV nhưng chưa xóa được hồ sơ/);
+  });
   it("delete: thành công → xóa CV rồi xóa dòng, chuyển hướng", async () => {
     results = [(op, ctx) => (ctx.includes("delete") ? { data: [{ id: ID }], error: null } : { data: { ref_code: "HS-ABCDEF" }, error: null })];
     removeObjects.mockResolvedValue({ ok: true });
@@ -135,7 +141,10 @@ describe("actions", () => {
     expect(filters.every((f) => f === filters[0])).toBe(true);
     expect(removeObjects).not.toHaveBeenCalled(); // không có bước xóa storage trước khi xóa dòng
     expect(removeAt.mock.calls).toEqual([[A, T], [B, T]]);
-    expect(r.error).toMatch(/Đã xóa 1 hồ sơ, 1 hồ sơ lỗi/); // A: storage lỗi → failed; B: deleted
+    // A: dòng đã xóa nhưng storage lỗi → orphan, KHÔNG báo "còn nguyên"; B: deleted
+    expect(r).toMatchObject({ deleted: 1, failed: 0, orphan: 1 });
+    expect(r.error).toMatch(/Đã xóa 2 hồ sơ quá hạn\. 1 hồ sơ đã xóa nhưng CV chưa xóa được/);
+    expect(r.error).not.toMatch(/còn nguyên/);
   });
   it("purge: xóa dòng không trả hàng → không đụng storage", async () => {
     const r = await purge([[{ id: A, created_at: T }]], () => []);

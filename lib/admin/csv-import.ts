@@ -1,6 +1,6 @@
 import { CsvError, parseCsv } from "@/lib/csv";
 import { normText } from "@/lib/normalize";
-import { jstToIso } from "@/lib/time";
+import { isDateKey, jstToIso } from "@/lib/time";
 import type { Catalog } from "@/lib/types";
 import { normalizeJobInput, type JobInput, type Raw } from "@/lib/admin/job-input";
 
@@ -72,7 +72,7 @@ function interviewIso(v: string): string | null {
   const m = /^(\d{4})[-/](\d{2})[-/](\d{2}) (\d{2}):(\d{2})$/.exec(v);
   if (!m) return null;
   const d = `${m[1]}-${m[2]}-${m[3]}`;
-  if (Number.isNaN(Date.parse(d)) || new Date(d).toISOString().slice(0, 10) !== d || +m[4] > 23 || +m[5] > 59) return null;
+  if (!isDateKey(d) || +m[4] > 23 || +m[5] > 59) return null;
   return jstToIso(d, `${m[4]}:${m[5]}`);
 }
 

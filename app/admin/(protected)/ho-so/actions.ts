@@ -7,7 +7,7 @@ import { removeApplicationObjects, removeObjectsAt } from "@/lib/applications/se
 import { createServerSupabase } from "@/lib/supabase/server";
 import { jstTodayKey } from "@/lib/time";
 
-export type AppState = { error?: string; ok?: string; nonce?: number; deleted?: number; failed?: number; more?: boolean };
+export type AppState = { error?: string; ok?: string; nonce?: number; deleted?: number; failed?: number; orphan?: number; more?: boolean };
 const err = (error: string): AppState => ({ error, nonce: Date.now() });
 const ok = (msg: string): AppState => ({ ok: msg, nonce: Date.now() });
 // id hồ sơ là uuid (schema 0001); chỉ nhận đúng dạng, không tin dữ liệu form.
@@ -43,22 +43,23 @@ export async function addNote(_p: AppState, fd: FormData): Promise<AppState> {
 type Sb = Awaited<ReturnType<typeof createServerSupabase>>;
 
 // Xóa tay: xóa CV trước, lỗi thì dừng (không để CV mồ côi); ghi chú xóa theo (FK on delete cascade).
-async function deleteOne(sb: Sb, id: string): Promise<"deleted" | "skipped" | "failed"> {
+async function deleteOne(sb: Sb, id: string): Promise<"deleted" | "skipped" | "failed" | "cvGone"> {
   const r = await removeApplicationObjects(id);
   if ("error" in r) return r.error === "not_found" ? "skipped" : "failed";
   const { data, error } = await sb.from("applications").delete().eq("id", id).select("id");
-  if (error) { console.error("[admin/deleteApplication]", error.code); return "failed"; }
+  // CV đã xóa nhưng dòng còn: báo đúng để admin bấm xóa lại.
+  if (error) { console.error("[admin/deleteApplication]", error.code); return "cvGone"; }
   return data?.length ? "deleted" : "skipped";
 }
 
 // Purge: xóa dòng TRƯỚC với điều kiện purge (completeApplication song song có thể vừa chuyển sang new → không khớp → không đụng storage),
-// rồi xóa CV theo id + created_at của dòng vừa xóa. Storage lỗi sau đó chỉ để lại object mồ côi (ghi log prefix, không PII).
-async function purgeOne(sb: Sb, id: string, cond: string): Promise<"deleted" | "skipped" | "failed"> {
+// rồi xóa CV theo id + created_at của dòng vừa xóa. Storage lỗi sau đó để lại object mồ côi ("orphan", ghi log id, không PII).
+async function purgeOne(sb: Sb, id: string, cond: string): Promise<"deleted" | "skipped" | "failed" | "orphan"> {
   const { data, error } = await sb.from("applications").delete().eq("id", id).or(cond).select("id, created_at");
   if (error) { console.error("[admin/purge]", error.code); return "failed"; }
   if (!data?.length) return "skipped";
   const r = await removeObjectsAt(data[0].id, data[0].created_at);
-  if ("error" in r) { console.error("[admin/purge] orphan objects for application", data[0].id, r.error); return "failed"; }
+  if ("error" in r) { console.error("[admin/purge] orphan objects for application", data[0].id, r.error); return "orphan"; }
   return "deleted";
 }
 
@@ -72,7 +73,9 @@ export async function deleteApplication(_p: AppState, fd: FormData): Promise<App
   if (error) { console.error("[admin/deleteApplication]", error.code); return err("Không tải được hồ sơ."); }
   if (!data) return err("Không tìm thấy hồ sơ.");
   if (String(fd.get("confirm") ?? "").trim().toUpperCase() !== data.ref_code) return err("Nhập đúng mã hồ sơ để xác nhận xóa.");
-  if ((await deleteOne(sb, id)) === "failed") return err("Không xóa được hồ sơ hoặc CV. Hồ sơ vẫn được giữ, hãy thử lại.");
+  const r = await deleteOne(sb, id);
+  if (r === "failed") return err("Không xóa được CV. Hồ sơ và CV vẫn được giữ, hãy thử lại.");
+  if (r === "cvGone") return err("Đã xóa CV nhưng chưa xóa được hồ sơ. Hãy bấm xóa lại.");
   revalidatePath("/admin/ho-so", "layout");
   redirect("/admin/ho-so?da-xoa=1");
 }
@@ -87,7 +90,7 @@ export async function purgeExpired(): Promise<AppState> {
   const stale = new Date(Date.now() - 24 * 3600_000).toISOString();
   const cond = `delete_after.lt.${today},and(status.eq.pending_upload,created_at.lt.${stale})`;
   const start = Date.now();
-  let deleted = 0, failed = 0, seen = 0, last = "", more = false;
+  let deleted = 0, failed = 0, orphan = 0, seen = 0, last = "", more = false;
   outer: for (;;) {
     // Phân trang theo id (keyset) để hồ sơ lỗi không bị lấy lại vô hạn.
     let q = sb.from("applications").select("id")
@@ -100,13 +103,17 @@ export async function purgeExpired(): Promise<AppState> {
       if (seen >= MAX_ROWS || Date.now() - start > MAX_MS) { more = true; break outer; }
       seen++;
       const r = await purgeOne(sb, id, cond);
-      if (r === "deleted") deleted++; else if (r === "failed") failed++;
+      if (r === "deleted") deleted++; else if (r === "failed") failed++; else if (r === "orphan") orphan++;
     }
     last = data[data.length - 1].id;
     if (data.length < BATCH) break;
   }
   revalidatePath("/admin/ho-so", "layout");
   const tail = more ? " Còn hồ sơ cần dọn — bấm lại để tiếp tục." : "";
-  const res = failed ? err(`Đã xóa ${deleted} hồ sơ, ${failed} hồ sơ lỗi (còn nguyên, thử lại sau).${tail}`) : ok(`Đã xóa ${deleted} hồ sơ quá hạn.${tail}`);
-  return { ...res, deleted, failed, ...(more && { more }) };
+  const parts = [`Đã xóa ${deleted + orphan} hồ sơ quá hạn.`];
+  if (failed) parts.push(`${failed} hồ sơ lỗi (còn nguyên, thử lại sau).`);
+  if (orphan) parts.push(`${orphan} hồ sơ đã xóa nhưng CV chưa xóa được khỏi Storage: xem log "[admin/purge] orphan" để xóa tay.`);
+  const msg = parts.join(" ") + tail;
+  const res = failed || orphan ? err(msg) : ok(msg);
+  return { ...res, deleted, failed, ...(orphan && { orphan }), ...(more && { more }) };
 }

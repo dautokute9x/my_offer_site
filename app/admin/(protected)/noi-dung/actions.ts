@@ -1,6 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { SITE_DATA_TAG } from "@/lib/data";
 // Demo: requireAdmin ném lỗi, nên không action nào chạy được khi chưa có Supabase.
 import { parseSettings, type SettingsErrors } from "@/lib/admin/settings-input";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -19,6 +20,7 @@ export async function saveSettings(_prev: SettingsState, fd: FormData): Promise<
     console.error("[admin/saveSettings]", error.code);
     return { errors: { form: "Không lưu được. Thử lại hoặc báo quản trị viên." }, values, nonce: Date.now() };
   }
+  updateTag(SITE_DATA_TAG);
   revalidatePath("/", "layout");
   return { ok: true, values, nonce: Date.now() };
 }

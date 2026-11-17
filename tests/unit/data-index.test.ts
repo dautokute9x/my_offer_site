@@ -3,6 +3,9 @@ import { demoCatalog } from "@/lib/demo/catalog";
 import { parseFilters } from "@/lib/filters";
 import { siteDefaults } from "@/lib/site-defaults";
 
+// unstable_cache chỉ chạy trong runtime Next: ghi lại tham số, gọi thẳng hàm.
+const cacheCalls: unknown[][] = [];
+vi.mock("next/cache", () => ({ unstable_cache: (fn: () => unknown, key: string[], opts: object) => { cacheCalls.push([key, opts]); return fn; } }));
 vi.mock("@/lib/data/supabase", () => ({
   searchJobs: vi.fn(async () => ({ items: [], total: 0, page: 1, pageSize: 12, pageCount: 0 })),
   getCatalog: vi.fn(async () => "SB"),
@@ -36,6 +39,7 @@ describe("lib/data chọn nguồn", () => {
     expect(sb.getCatalog).not.toHaveBeenCalled();
     sbMode();
     expect(await d.getCatalog()).toBe("SB");
+    expect(cacheCalls).toContainEqual([["catalog"], { tags: [d.SITE_DATA_TAG], revalidate: 300 }]);
   });
   it("getJobByCode", async () => {
     demoMode();

@@ -1,6 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { SITE_DATA_TAG } from "@/lib/data";
 import { CATALOG_TABLE, isKind, parseCatalog, positiveId, type CatalogErrors, type CatalogKind } from "@/lib/admin/catalog-input";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -32,6 +33,7 @@ export async function saveCatalog(_prev: CatalogState, fd: FormData): Promise<Ca
     const dup: CatalogErrors = kind === "skill" ? { name: "Tên đã tồn tại." } : { slug: "Slug đã tồn tại." };
     return fail(fd, error.code === "23505" ? dup : { form: "Không lưu được. Thử lại hoặc báo quản trị viên." });
   }
+  updateTag(SITE_DATA_TAG);
   revalidatePath("/", "layout");
   // Thêm mới: đổi nonce để form được dựng lại (xóa giá trị); sửa: giữ nguyên giá trị đã nhập.
   return { ok: true, nonce: Date.now(), ...(id != null && { values: toValues(fd) }) };
@@ -60,6 +62,7 @@ export async function deleteCatalog(_prev: CatalogState, fd: FormData): Promise<
     return { errors: { form: error.code === "23503" ? "Mục đang được sử dụng." : "Không xóa được." } };
   }
   if (!data?.length) return { errors: { form: NOT_FOUND } };
+  updateTag(SITE_DATA_TAG);
   revalidatePath("/", "layout");
   return { ok: true };
 }

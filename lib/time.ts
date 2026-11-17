@@ -25,8 +25,11 @@ export function jstDateKey(iso: string): string {
   return `${p.y}-${p.m}-${p.d}`;
 }
 
+// Ném RangeError khi ngày/giờ không tồn tại (2026-02-30, 25:00): Date tự "lăn" sang ngày khác nên phải so lại.
 export function jstToIso(dateKey: string, hhmm: string): string {
-  return new Date(`${dateKey}T${hhmm}:00+09:00`).toISOString();
+  const d = new Date(`${dateKey}T${hhmm}:00+09:00`);
+  if (Number.isNaN(d.getTime()) || jstDateKey(d.toISOString()) !== dateKey) throw new RangeError(`Ngày không hợp lệ: ${dateKey} ${hhmm}`);
+  return d.toISOString();
 }
 
 export function jstTodayKey(now: Date = new Date()): string {
@@ -40,7 +43,10 @@ export function dayHeading(dateKey: string): string {
 }
 
 // Tham số ?tu=/?den= dạng YYYY-MM-DD có thật (bỏ 2026-02-30); lặp lại thì lấy giá trị đầu.
+// "YYYY-MM-DD" có thật (loại 2026-02-30, 2026-13-45).
+export const isDateKey = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s);
+
 export function parseDateKey(v: string | string[] | undefined): string | undefined {
   const s = [v ?? []].flat()[0] ?? "";
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s) ? s : undefined;
+  return isDateKey(s) ? s : undefined;
 }
