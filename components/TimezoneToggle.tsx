@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
+import { useI18n } from "@/lib/i18n/client";
 
 const KEY = "tz-vn";
 
 // Bọc nội dung; phần tử con dùng `hidden group-data-[vn=true]:block` cho giờ Việt Nam.
 // State trong bộ nhớ là nguồn đúng; localStorage chỉ là tiện ích (có thể ném lỗi).
 export default function TimezoneToggle({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [vn, setVn] = useState(false);
   useEffect(() => {
     try {
@@ -21,7 +23,7 @@ export default function TimezoneToggle({ children }: { children: ReactNode }) {
     <div data-vn={vn} className="group space-y-3">
       <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
         <input type="checkbox" checked={vn} onChange={(e) => change(e.target.checked)} className="size-5 accent-ink" />
-        Hiện giờ Việt Nam
+        {t.jobs.timezone.showVn}
       </label>
       {children}
     </div>

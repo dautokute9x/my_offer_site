@@ -1,15 +1,19 @@
 import { filtersToQuery, type JobFilters } from "@/lib/filters";
+import { localePath } from "@/lib/i18n/config";
+import { getT } from "@/lib/i18n/server";
 
-export default function Pagination({ filters, pageCount }: { filters: JobFilters; pageCount: number }) {
+export default async function Pagination({ filters, pageCount }: { filters: JobFilters; pageCount: number }) {
   if (pageCount <= 1) return null;
-  const href = (page: number) => `/viec-lam${filtersToQuery({ ...filters, page }) ? "?" + filtersToQuery({ ...filters, page }) : ""}`;
+  const { lang, t } = await getT();
+  const P = t.jobs.pagination;
+  const href = (page: number) => localePath(lang, `/viec-lam${filtersToQuery({ ...filters, page }) ? "?" + filtersToQuery({ ...filters, page }) : ""}`);
   const cls = "inline-flex min-h-11 min-w-11 items-center justify-center border border-rule-2 bg-paper px-3 text-sm tabular-nums transition-colors duration-200 hover:border-ink";
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1).filter(
     (p) => p === 1 || p === pageCount || Math.abs(p - filters.page) <= 1,
   );
   return (
-    <nav aria-label="Phân trang" className="mt-10 flex flex-wrap items-center gap-2">
-      {filters.page > 1 && <a href={href(filters.page - 1)} className={cls} rel="prev">Trang trước</a>}
+    <nav aria-label={P.label} className="mt-10 flex flex-wrap items-center gap-2">
+      {filters.page > 1 && <a href={href(filters.page - 1)} className={cls} rel="prev">{P.prev}</a>}
       {pages.map((p, i) => (
         <span key={p} className="contents">
           {i > 0 && p - pages[i - 1] > 1 && <span aria-hidden>…</span>}
@@ -19,7 +23,7 @@ export default function Pagination({ filters, pageCount }: { filters: JobFilters
           </a>
         </span>
       ))}
-      {filters.page < pageCount && <a href={href(filters.page + 1)} className={cls} rel="next">Trang sau</a>}
+      {filters.page < pageCount && <a href={href(filters.page + 1)} className={cls} rel="next">{P.next}</a>}
     </nav>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useSyncExternalStore, type ReactNode } from "react";
+import { useI18n } from "@/lib/i18n/client";
 
 const KEY = "jobView";
 type View = "list" | "poster";
@@ -21,6 +22,7 @@ const read = (): View => {
 };
 
 export default function ViewToggle({ summary, children }: { summary: ReactNode; children: ReactNode }) {
+  const V = useI18n().t.jobs.view;
   const view = useSyncExternalStore(subscribe, read, () => "list" as View);
   const pick = (v: View) => {
     store.set("mem", v);
@@ -33,7 +35,7 @@ export default function ViewToggle({ summary, children }: { summary: ReactNode; 
     <div data-view={view} className="group/grid space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {summary}
-        <div role="group" aria-label="Kiểu hiển thị" className="inline-flex border border-ink">
+        <div role="group" aria-label={V.label} className="inline-flex border border-ink">
           {(["list", "poster"] as const).map((v) => (
             <button
               key={v}
@@ -42,7 +44,7 @@ export default function ViewToggle({ summary, children }: { summary: ReactNode; 
               onClick={() => pick(v)}
               className={`min-h-11 px-4 text-sm font-semibold transition-colors duration-200 ${view === v ? "bg-ink text-paper" : "bg-paper text-ink hover:bg-paper-2"}`}
             >
-              {v === "list" ? "Danh sách" : "Poster"}
+              {V[v]}
             </button>
           ))}
         </div>

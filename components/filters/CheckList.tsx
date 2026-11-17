@@ -1,6 +1,8 @@
 "use client";
 import { useId, useState, type ReactNode } from "react";
 import { normText } from "@/lib/normalize";
+import { useI18n } from "@/lib/i18n/client";
+import { fmt } from "@/lib/i18n/format";
 
 export type CheckItem = { value: string; label: ReactNode; search: string; group: string };
 export type CheckGroup = { key: string; label: string; toggle?: { checked: boolean; onChange: (on: boolean) => void } };
@@ -14,6 +16,7 @@ export default function CheckList(p: {
   onChange: (next: string[]) => void;
   searchable?: boolean;
 }) {
+  const F = useI18n().t.jobs.filters;
   const [q, setQ] = useState("");
   const id = useId();
   const nq = normText(q);
@@ -23,8 +26,8 @@ export default function CheckList(p: {
       <legend className="font-semibold text-ink">{p.legend}</legend>
       {p.searchable !== false && (
         <>
-          <label htmlFor={`${id}-q`} className="sr-only">Tìm trong {p.legend}</label>
-          <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm…"
+          <label htmlFor={`${id}-q`} className="sr-only">{fmt(F.searchIn, { v: p.legend })}</label>
+          <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={F.searchPlaceholder}
             className="field mt-2 min-h-11 text-sm" />
         </>
       )}
@@ -37,7 +40,7 @@ export default function CheckList(p: {
               {g.toggle ? (
                 <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink">
                   <input type="checkbox" checked={g.toggle.checked} onChange={(e) => g.toggle!.onChange(e.target.checked)} />
-                  {g.label} (cả nhóm)
+                  {fmt(F.wholeGroup, { v: g.label })}
                 </label>
               ) : (
                 g.label && <div className="pt-2 text-xs text-muted">{g.label}</div>
