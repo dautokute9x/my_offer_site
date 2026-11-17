@@ -80,7 +80,7 @@ Chưa kiểm chứng được khi chưa có dự án Supabase thật (cần ch�
 Lưu ý vận hành (lỗi nhỏ đã biết, chưa sửa):
 
 - nhập CSV 2000 dòng mất ≈2 giây trên Postgres cục bộ (giới hạn statement của Supabase là 8 giây; chưa đo trên Supabase thật); CSV ghi đè toàn bộ trường của tin đã có (ô trống xóa nội dung; lịch phỏng vấn chỉ được thêm);
-- "Dọn hồ sơ quá hạn lưu" xử lý tối đa 200 hồ sơ (≈20 giây) mỗi lần bấm, còn tồn thì bấm lại; chưa có dọn tự động theo lịch; nếu xóa CV lỗi thì còn tệp mồ côi trong Storage: trang báo số lượng, id ghi trong log `[admin/purge] orphan` để xóa tay;
+- "Dọn hồ sơ quá hạn lưu" xóa cả hồ sơ "Không phù hợp" và "Rút hồ sơ" (Điều 25 Luật 91/2025/QH15); xử lý tối đa 200 hồ sơ (≈20 giây) mỗi lần bấm, còn tồn thì bấm lại; chưa có dọn tự động theo lịch; nếu xóa CV lỗi thì còn tệp mồ côi trong Storage: trang báo số lượng, id ghi trong log `[admin/purge] orphan` để xóa tay;
 - ghi chú nội bộ hiển thị tác giả dạng "QTV <uuid>";
 - tin chi tiết render động (không ISR), mỗi lượt xem gọi một RPC;
 - nhiều lỗi nhỏ về giao diện/accessibility của Giai đoạn 1 xem `docs/superpowers/notes/2026-11-16-giai-doan-1-ket-qua.md`.

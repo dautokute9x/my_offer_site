@@ -73,7 +73,7 @@ export default async function ApplicationsAdmin({ searchParams }: { searchParams
       )}
       <section aria-labelledby="h-purge" className="space-y-2 border-t pt-4">
         <h2 id="h-purge" className="text-lg font-bold">Dọn dẹp</h2>
-        <p className="text-sm text-muted">Xóa hồ sơ đã quá hạn lưu và hồ sơ chờ tải CV quá 24 giờ, kèm CV.</p>
+        <p className="text-sm text-muted">Xóa kèm CV: hồ sơ đã quá hạn lưu, hồ sơ &quot;Không phù hợp&quot; hoặc &quot;Rút hồ sơ&quot; (Điều 25 Luật Bảo vệ dữ liệu cá nhân), và hồ sơ chờ tải CV quá 24 giờ.</p>
         <PurgeForm />
       </section>
     </div>

@@ -88,7 +88,8 @@ export async function purgeExpired(): Promise<AppState> {
   const sb = await createServerSupabase();
   const today = jstTodayKey();
   const stale = new Date(Date.now() - 24 * 3600_000).toISOString();
-  const cond = `delete_after.lt.${today},and(status.eq.pending_upload,created_at.lt.${stale})`;
+  // Điều 25 Luật 91/2025/QH15: không tuyển (rejected) hoặc ứng viên rút hồ sơ (withdrawn) thì xóa dữ liệu đã cung cấp.
+  const cond = `delete_after.lt.${today},status.in.(rejected,withdrawn),and(status.eq.pending_upload,created_at.lt.${stale})`;
   const start = Date.now();
   let deleted = 0, failed = 0, orphan = 0, seen = 0, last = "", more = false;
   outer: for (;;) {

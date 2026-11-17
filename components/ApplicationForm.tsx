@@ -137,7 +137,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
       <div>
         <label className="flex items-start gap-2">
           <input type="checkbox" name="consent" aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? "e-consent" : undefined} className="mt-1 size-5" />
-          <span>Tôi đồng ý để xử lý thông tin cá nhân nhằm mục đích tuyển dụng và tư vấn, lưu tối đa {retentionMonths} tháng. Xem <a href="/chinh-sach-bao-mat" target="_blank" rel="noopener" className="link font-semibold text-ink">Chính sách bảo mật (mở tab mới)</a>.</span>
+          <span>Tôi đồng ý cho xử lý dữ liệu cá nhân trong form này (kể cả CV) để xem xét ứng tuyển, tư vấn và liên hệ với tôi. Dữ liệu được lưu trên máy chủ đám mây đặt ngoài Việt Nam, tối đa {retentionMonths} tháng, và bị xóa nếu tôi không trúng tuyển hoặc rút hồ sơ. Tôi có thể rút lại sự đồng ý bất cứ lúc nào. Xem <a href="/chinh-sach-bao-mat" target="_blank" rel="noopener" className="link font-semibold text-ink">Chính sách bảo mật (mở tab mới)</a>.</span>
         </label>
         {errors.consent && <p id="e-consent" className="mt-1 text-sm font-semibold text-error">{errors.consent}</p>}
       </div>

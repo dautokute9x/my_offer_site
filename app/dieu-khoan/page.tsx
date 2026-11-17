@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import PolicyDraftBanner from "@/components/PolicyDraftBanner";
 import { getSiteSettings } from "@/lib/data";
@@ -15,7 +16,7 @@ export default async function Page() {
       <h2 className="pt-4 text-[length:var(--text-title)]">Thông tin tin tuyển dụng</h2>
       <p>Thông tin có thể thay đổi theo yêu cầu của nhà tuyển dụng. Vui lòng xác nhận lại với bên tư vấn trước khi quyết định.</p>
       <h2 className="pt-4 text-[length:var(--text-title)]">Dữ liệu cá nhân</h2>
-      <p>Hồ sơ của bạn được lưu tối đa {retentionMonths} tháng; xem thêm Chính sách bảo mật.</p>
+      <p>Dữ liệu cá nhân bạn gửi được xử lý theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 và được lưu tối đa {retentionMonths} tháng. Cách thu thập, lưu trữ, xóa và các quyền của bạn được nêu trong <Link href="/chinh-sach-bao-mat" className="link">Chính sách bảo mật</Link>.</p>
     </article>
   );
 }

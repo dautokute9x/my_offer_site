@@ -56,8 +56,20 @@ Deploy. Biến `NEXT_PUBLIC_*` được gắn vào mã lúc build: đổi giá t
 
 Các mục này cũng kiểm các giới hạn chưa chứng minh được ở README (đăng nhập Auth, PUT signed URL, `list()` metadata.size, PostgREST, RLS thật). Lỗi ở đây cần xử lý trước khi nhận hồ sơ thật.
 
+## Bảo vệ dữ liệu cá nhân (Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP)
+
+Luật Bảo vệ dữ liệu cá nhân và Nghị định 356/2025/NĐ-CP có hiệu lực từ 01/01/2026, thay Nghị định 13/2023. Website đã có sẵn: chính sách bảo mật mẫu, ô đồng ý ghi rõ mục đích và nơi lưu, lưu phiên bản đồng ý theo từng hồ sơ, xóa hồ sơ theo yêu cầu, dọn hồ sơ quá hạn và hồ sơ không trúng tuyển (Điều 25). Phần dưới là việc **chủ site phải tự làm**; danh sách này không thay cho tư vấn pháp lý.
+
+- [ ] Nhờ luật sư rà soát `/chinh-sach-bao-mat` và `/dieu-khoan`. Sau đó vào `/admin/noi-dung`: đổi **phiên bản đồng ý** (ví dụ `v1-2026-11`) và bật **policiesConfirmed**.
+- [ ] Lập **hồ sơ đánh giá tác động xử lý dữ liệu cá nhân**. Dữ liệu ứng viên lưu trên máy chủ đám mây ngoài Việt Nam (Supabase, Vercel), nên cần thêm **hồ sơ đánh giá tác động chuyển dữ liệu ra nước ngoài**, nộp cơ quan chuyên trách bảo vệ dữ liệu cá nhân (Cục A05, Bộ Công an); các nguồn tổng hợp nêu hạn 60 ngày kể từ khi bắt đầu chuyển. Doanh nghiệp nhỏ, khởi nghiệp có thể được miễn một số nghĩa vụ trong 5 năm đầu: kiểm tra điều kiện trong Nghị định 356.
+- [ ] Chỉ định người hoặc bộ phận phụ trách bảo vệ dữ liệu cá nhân (hoặc thuê dịch vụ bên ngoài).
+- [ ] Ký thỏa thuận xử lý dữ liệu với nhà tuyển dụng tại Nhật trước khi gửi hồ sơ ứng viên cho họ.
+- [ ] Quy trình nhận yêu cầu của ứng viên (xem, sửa, xóa, rút lại đồng ý): xác minh qua mã hồ sơ `HS-xxxxxx`, xử lý trong thời hạn luật định; xóa ở `/admin/ho-so/[id]` → **Xóa hồ sơ**.
+- [ ] Quy trình xử lý sự cố lộ, mất dữ liệu: ai phát hiện, ai thông báo cơ quan chuyên trách và ứng viên.
+- [ ] Chuyển hồ sơ không trúng tuyển sang trạng thái **Không phù hợp** và dọn định kỳ (mục dưới), trừ khi ứng viên đồng ý cho lưu lại.
+
 ## Dọn hồ sơ quá hạn lưu
-Hồ sơ được giữ `retentionMonths` tháng (mặc định 12, chỉnh ở `/admin/noi-dung`). Định kỳ vào `/admin/ho-so`, mục **Dọn dẹp**, bấm **Dọn hồ sơ quá hạn lưu**: xóa hồ sơ quá hạn và hồ sơ chờ tải CV quá 24 giờ, kèm CV. Thao tác không có lịch tự động và không hoàn tác được.
+Hồ sơ được giữ `retentionMonths` tháng (mặc định 12, chỉnh ở `/admin/noi-dung`). Định kỳ vào `/admin/ho-so`, mục **Dọn dẹp**, bấm **Dọn hồ sơ quá hạn lưu**: xóa kèm CV các hồ sơ quá hạn, hồ sơ ở trạng thái "Không phù hợp" hoặc "Rút hồ sơ" (Điều 25 Luật 91/2025/QH15), và hồ sơ chờ tải CV quá 24 giờ. Thao tác không có lịch tự động và không hoàn tác được.
 
 ## Sao lưu
 Hồ sơ chứa dữ liệu cá nhân. Bật/kiểm tra sao lưu DB của gói Supabase đang dùng; sao lưu DB không gồm tệp trong Storage (CV), cần tự sao lưu nếu cần. Giữ sao lưu theo cùng thời hạn lưu hồ sơ.

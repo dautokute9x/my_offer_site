@@ -137,7 +137,7 @@ describe("actions", () => {
     const r = await purge([[{ id: A, created_at: T }, { id: B, created_at: T }]], () => [{ id: n++ === 0 ? A : B, created_at: T }]);
     vi.useRealTimers();
     const filters = calls.filter((c) => c.op === "applications.or").map((c) => String(c.args[0]));
-    expect(filters[0]).toBe("delete_after.lt.2026-11-17,and(status.eq.pending_upload,created_at.lt.2026-11-15T16:00:00.000Z)");
+    expect(filters[0]).toBe("delete_after.lt.2026-11-17,status.in.(rejected,withdrawn),and(status.eq.pending_upload,created_at.lt.2026-11-15T16:00:00.000Z)");
     expect(filters.every((f) => f === filters[0])).toBe(true);
     expect(removeObjects).not.toHaveBeenCalled(); // không có bước xóa storage trước khi xóa dòng
     expect(removeAt.mock.calls).toEqual([[A, T], [B, T]]);
