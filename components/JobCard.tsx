@@ -19,7 +19,7 @@ export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Ca
     .filter(Boolean)
     .join(", ");
   return (
-    <article className="group/row relative grid gap-x-8 gap-y-4 border-t border-rule py-6 transition-colors duration-200 hover:bg-paper-2 md:grid-cols-[7.5rem_minmax(0,1fr)_minmax(0,17rem)] group-data-[view=poster]/grid:flex group-data-[view=poster]/grid:flex-col group-data-[view=poster]/grid:border-t-4 group-data-[view=poster]/grid:border-ink group-data-[view=poster]/grid:hover:bg-transparent">
+    <article className="group/row relative grid gap-x-8 gap-y-4 border-t border-rule py-6 transition-colors duration-200 hover:bg-paper-2 md:grid-cols-[7.5rem_minmax(0,1fr)_minmax(0,17rem)] group-data-[view=poster]/grid:flex group-data-[view=poster]/grid:flex-col group-data-[view=poster]/grid:border-2 group-data-[view=poster]/grid:border-ink group-data-[view=poster]/grid:bg-paper-2 group-data-[view=poster]/grid:p-6 group-data-[view=poster]/grid:shadow-[var(--shadow-card)] group-data-[view=poster]/grid:hover:bg-transparent">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 md:block">
         <p className="display-face text-2xl leading-none">#{job.code}</p>
         <p className="text-xs text-muted md:mt-2">Cập nhật {dmy(job.updatedAt)}</p>
@@ -27,7 +27,7 @@ export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Ca
       </div>
       <div className="min-w-0">
         <h3 className="text-[length:var(--text-title)] leading-tight group-data-[view=poster]/grid:text-[length:var(--text-display-s)]">
-          <Link href={jobHref(job)} className="link decoration-transparent after:absolute after:inset-0 group-hover/row:decoration-accent">
+          <Link href={jobHref(job)} className="link decoration-transparent after:absolute after:inset-0 group-hover/row:decoration-accent-2">
             {job.titleVi}
           </Link>
         </h3>
@@ -51,7 +51,7 @@ export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Ca
         </dd>
         {req && <><dt className="text-muted">Yêu cầu</dt><dd className="text-ink">{req}</dd></>}
         {job.nextInterview && (
-          <><dt className="text-muted">Phỏng vấn</dt><dd className="font-semibold text-accent">{formatJst(job.nextInterview.startsAt)}</dd></>
+          <><dt className="text-muted">Phỏng vấn</dt><dd className="font-semibold text-accent-2">{formatJst(job.nextInterview.startsAt)}</dd></>
         )}
       </dl>
     </article>

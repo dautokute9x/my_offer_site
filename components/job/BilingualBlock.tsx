@@ -16,7 +16,7 @@ export default function BilingualBlock({ text, status }: { text: { ja: string | 
       {showJa && text.ja ? ja(text.ja) : <p className="whitespace-pre-line">{text.vi}</p>}
       {text.ja && (
         <button type="button" onClick={() => setShowJa(!showJa)} aria-pressed={showJa}
-          className="link min-h-11 font-[family-name:var(--font-display)] text-sm font-semibold text-ink">
+          className="link min-h-11 text-sm font-semibold text-ink">
           {showJa ? "Xem bản dịch tiếng Việt" : "Xem bản gốc tiếng Nhật"}
         </button>
       )}

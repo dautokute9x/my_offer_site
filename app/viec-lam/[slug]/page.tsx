@@ -63,7 +63,7 @@ export default async function JobPage({ params, searchParams }: Props) {
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />}
       <BackToResults />
       {closed && <p role="status" className="border-l-4 border-ink bg-paper-3 px-4 py-3 font-bold text-ink">Đã ngừng tuyển</p>}
-      <header className="grid gap-6 border-t-4 border-ink pt-6 lg:grid-cols-12 lg:gap-8">
+      <header className="grid gap-6 border-t-2 border-accent-2 pt-6 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-9">
           <p className="flex flex-wrap items-center gap-3">
             <span className="display-face text-2xl leading-none">#{job.code}</span>
@@ -75,7 +75,7 @@ export default async function JobPage({ params, searchParams }: Props) {
         </div>
         {!closed && <div className="hidden lg:col-span-3 lg:flex lg:items-end lg:justify-end"><ApplyButton job={job} /></div>}
       </header>
-      <nav aria-label="Chế độ xem" className="flex gap-6 border-b border-rule">
+      <nav aria-label="Chế độ xem" className="flex gap-6 border-b-2 border-accent-2/30">
         <a href={base} aria-current={poster ? undefined : "page"} className={tab(!poster)}>Đầy đủ</a>
         <a href={`${base}?xem=tomtat`} aria-current={poster ? "page" : undefined} className={tab(poster)}>Tóm tắt</a>
       </nav>
@@ -89,7 +89,7 @@ export default async function JobPage({ params, searchParams }: Props) {
       {related.length > 0 && (
         <section aria-labelledby="lien-quan" className="space-y-6">
           <h2 id="lien-quan" className="opens">Việc làm liên quan</h2>
-          <div className="border-b border-rule">{related.map((r) => <JobCard key={r.id} job={r} catalog={catalog} />)}</div>
+          <div className="border-b-2 border-accent-2/30">{related.map((r) => <JobCard key={r.id} job={r} catalog={catalog} />)}</div>
         </section>
       )}
       {!closed && <ApplyBar job={job} />}

@@ -9,7 +9,7 @@ export function ApplyButton({ job }: { job: Pick<Job, "code"> }) {
 
 export default function ApplyBar({ job }: { job: Pick<Job, "code" | "titleVi"> }) {
   return (
-    <div data-apply-bar className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t-4 border-ink bg-paper px-4 py-2 lg:hidden">
+    <div data-apply-bar className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t-2 border-accent-2 bg-paper px-4 py-2 lg:hidden">
       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">#{job.code} {job.titleVi}</span>
       <ApplyButton job={job} />
     </div>

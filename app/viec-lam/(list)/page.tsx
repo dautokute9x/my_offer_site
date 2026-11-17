@@ -68,7 +68,7 @@ export default async function JobsPage({ searchParams }: Props) {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 border-t-4 border-ink border-b border-b-rule group-data-[view=poster]/grid:gap-x-8 group-data-[view=poster]/grid:gap-y-14 group-data-[view=poster]/grid:border-0 group-data-[view=poster]/grid:md:grid-cols-2 group-data-[view=poster]/grid:xl:grid-cols-3">
+            <div className="grid grid-cols-1 border-t-2 border-accent-2 border-b border-b-rule group-data-[view=poster]/grid:gap-x-8 group-data-[view=poster]/grid:gap-y-14 group-data-[view=poster]/grid:border-0 group-data-[view=poster]/grid:md:grid-cols-2 group-data-[view=poster]/grid:xl:grid-cols-3">
               {items.map((j) => <JobCard key={j.id} job={j} catalog={catalog} />)}
             </div>
           )}

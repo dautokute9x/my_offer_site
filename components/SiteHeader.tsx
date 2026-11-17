@@ -13,7 +13,7 @@ const link = "link inline-flex min-h-11 items-center whitespace-nowrap decoratio
 export default async function SiteHeader() {
   const { brandName } = await getSiteSettings();
   return (
-    <header className="border-b-4 border-ink bg-paper">
+    <header className="border-b-2 border-ink bg-paper">
       <div className="wrap flex min-h-18 items-center justify-between gap-6">
         <Link href="/" aria-label={`${brandName}, trang chủ`} className="display-face whitespace-nowrap text-xl leading-none sm:text-2xl">
           {brandName}
@@ -31,7 +31,7 @@ export default async function SiteHeader() {
         <MobileMenu>
           <nav aria-label="Menu di động" className="absolute right-0 z-10 mt-2 flex w-64 flex-col border border-ink bg-paper p-2">
             {nav.map((n) => (
-              <Link key={n.href} href={n.href} className="flex min-h-12 items-center border-b border-rule px-3">
+              <Link key={n.href} href={n.href} className="flex min-h-12 items-center border-b-2 border-accent-2/30 px-3">
                 {n.label}
               </Link>
             ))}

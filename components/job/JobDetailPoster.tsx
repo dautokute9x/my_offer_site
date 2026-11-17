@@ -27,7 +27,7 @@ export default function JobDetailPoster({ job, catalog, interviews }: { job: Job
       )}
       {interviews[0] && (
         <TimezoneToggle>
-          <p className="font-semibold text-accent">Phỏng vấn {formatJst(interviews[0].startsAt)}</p>
+          <p className="font-semibold text-accent-2">Phỏng vấn {formatJst(interviews[0].startsAt)}</p>
           <p className="hidden text-base group-data-[vn=true]:block">= {formatVn(interviews[0].startsAt)}</p>
         </TimezoneToggle>
       )}

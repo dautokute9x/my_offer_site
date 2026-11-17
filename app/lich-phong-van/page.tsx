@@ -82,13 +82,13 @@ export default async function InterviewSchedulePage({ searchParams }: Props) {
         <TimezoneToggle>
           <div className="space-y-12">
             {[...days].map(([key, list]) => (
-              <section key={key} aria-labelledby={`d-${key}`} className="grid gap-4 border-t-4 border-ink pt-4 lg:grid-cols-12 lg:gap-8">
+              <section key={key} aria-labelledby={`d-${key}`} className="grid gap-4 border-t-2 border-accent-2 pt-4 lg:grid-cols-12 lg:gap-8">
                 <h2 id={`d-${key}`} className="text-[length:var(--text-title)] lg:col-span-3">{dayHeading(key)}</h2>
                 <ul className="lg:col-span-9">
                   {list.map((e) => (
-                    <li key={e.id} className="grid gap-x-6 gap-y-2 border-b border-rule py-4 first:pt-0 sm:grid-cols-[6rem_minmax(0,1fr)_auto] sm:items-center">
+                    <li key={e.id} className="grid gap-x-6 gap-y-2 border-b-2 border-accent-2/30 py-4 first:pt-0 sm:grid-cols-[6rem_minmax(0,1fr)_auto] sm:items-center">
                       <div>
-                        <p className="display-face text-2xl leading-none text-accent">{formatJst(e.startsAt).split(" · ")[1]?.split(" ")[0]}</p>
+                        <p className="display-face text-2xl leading-none text-accent-2">{formatJst(e.startsAt).split(" · ")[1]?.split(" ")[0]}</p>
                         <p className="mt-1 text-xs text-muted">{formatJst(e.startsAt).split(" · ")[1]?.split(" ").slice(1).join(" ")}</p>
                         <p className="hidden text-xs text-muted group-data-[vn=true]:block">= {formatVn(e.startsAt)}</p>
                       </div>

@@ -23,14 +23,14 @@ export default function JobDetailFull({ job, catalog, interviews }: { job: Job; 
   return (
     <div className="space-y-10">
       <Section id="luong" title="Lương & thu nhập">
-        <dl className="grid gap-x-8 gap-y-4 font-[family-name:var(--font-display)] sm:grid-cols-3">
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
           <div><dt className="text-sm text-muted">Tháng<span className="sr-only">:</span></dt>{" "}<dd className="display-face mt-1 text-[length:var(--text-title)]">{monthly ?? UNCONFIRMED}</dd></div>
           <div><dt className="text-sm text-muted">Năm<span className="sr-only">:</span></dt>{" "}<dd className="display-face mt-1 text-[length:var(--text-title)]">{annual ?? UNCONFIRMED}</dd></div>
           <div><dt className="text-sm text-muted">Thương lượng<span className="sr-only">:</span></dt>{" "}<dd className="mt-1"><TriValue value={job.salaryNegotiable} /></dd></div>
         </dl>
       </Section>
       <Section id="yeu-cau" title="Yêu cầu">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 font-[family-name:var(--font-display)] text-base">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-base">
           <dt className="text-muted">Tiếng Nhật</dt><dd>{level}{job.jpNote && <>, <span lang="ja">{job.jpNote}</span></>}</dd>
           <dt className="text-muted">Kinh nghiệm</dt><dd>{exp}{job.experienceNote && <>, <span lang="ja">{job.experienceNote}</span></>}</dd>
           <dt className="text-muted">Kỹ năng</dt><dd>{skills.join(", ") || UNCONFIRMED}</dd>
@@ -44,13 +44,13 @@ export default function JobDetailFull({ job, catalog, interviews }: { job: Job; 
         {!has("workingHours") && !has("holidays") && !has("overtime") && <p>{UNCONFIRMED}</p>}
       </Section>
       <Section id="quyen-loi" title="Quyền lợi">
-        <ul className="grid gap-x-8 font-[family-name:var(--font-display)] text-base sm:grid-cols-2">
+        <ul className="grid gap-x-8 text-base sm:grid-cols-2">
           {catalog.benefits.map((b) => (
-            <li key={b.slug} className="flex min-h-11 items-center justify-between gap-2 border-b border-rule py-2">
+            <li key={b.slug} className="flex min-h-11 items-center justify-between gap-2 border-b-2 border-accent-2/30 py-2">
               <span>{b.nameVi}</span><TriValue value={job.benefits[b.slug] ?? null} />
             </li>
           ))}
-          <li className="flex min-h-11 items-center justify-between gap-2 border-b border-rule py-2">
+          <li className="flex min-h-11 items-center justify-between gap-2 border-b-2 border-accent-2/30 py-2">
             <span>Xe công ty</span><TriValue value={job.companyCarProvided} />
           </li>
         </ul>

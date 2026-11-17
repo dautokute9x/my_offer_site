@@ -43,7 +43,7 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
 
   const body = (
     <form onSubmit={(e) => { e.preventDefault(); salary(e.currentTarget); }} className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-t-4 border-ink p-4 pb-2 lg:px-0">
+      <div className="flex items-center justify-between border-t-2 border-accent-2 p-4 pb-2 lg:px-0">
         <h2 id="filter-title" ref={title} tabIndex={-1} className="text-[length:var(--text-title)]">Bộ lọc</h2>
         <button type="button" onClick={() => dialog.current?.close()} className="btn min-h-11 lg:hidden">Đóng</button>
       </div>
