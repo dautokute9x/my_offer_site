@@ -113,3 +113,9 @@ h1, h2, h3 {
 }
 
 footer :focus-visible { outline-color: var(--color-paper); }
+
+/* Bản tiếng Trung: ưu tiên nét chữ giản thể (Noto Sans SC) trước font Nhật cho chữ Hán. */
+html:lang(zh-Hans) {
+  --font-display: var(--font-big-shoulders), "Big Shoulders", Impact, var(--font-noto-sc), var(--font-noto-jp), sans-serif;
+  --font-body: var(--font-be-vietnam), "Be Vietnam Pro", var(--font-noto-sc), var(--font-noto-jp), system-ui, sans-serif;
+}
