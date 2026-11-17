@@ -70,7 +70,7 @@ export default async function JobPage({ params, searchParams }: Props) {
         </p>
         <h1 className="text-2xl font-bold text-navy">{job.titleVi}</h1>
         <p lang="ja" className="text-slate-600">{job.titleJa}</p>
-        <p className="text-sm">📍 {places.map((p) => p.nameVi).join(", ") || "Chưa xác nhận"}{job.locationDetailJa && <> · <span lang="ja">{job.locationDetailJa}</span></>}</p>
+        <p className="text-sm"><span aria-hidden="true">📍</span> {places.map((p) => p.nameVi).join(", ") || "Chưa xác nhận"}{job.locationDetailJa && <> · <span lang="ja">{job.locationDetailJa}</span></>}</p>
         {!closed && <div className="hidden lg:block"><ApplyButton job={job} /></div>}
       </header>
       <nav aria-label="Chế độ xem" className="flex gap-1 border-b border-slate-200">

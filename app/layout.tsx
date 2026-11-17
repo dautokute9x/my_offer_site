@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={`${beVietnam.variable} ${notoJp.variable}`}>
       <body className="min-h-screen flex flex-col max-lg:has-[[data-apply-bar]]:pb-16">
-        <a href="#main" className="sr-only focus:not-sr-only focus:inline-flex focus:min-h-11 focus:items-center focus:bg-white focus:px-4 focus:font-semibold focus:text-navy focus:underline">Bỏ qua đến nội dung chính</a>
+        <a href="#main" className="absolute left-2 top-2 z-50 inline-flex min-h-11 -translate-y-[200%] items-center bg-white px-4 font-semibold text-navy underline focus:translate-y-0">Bỏ qua đến nội dung chính</a>
         <DemoBanner />
         <SiteHeader />
         <main id="main" tabIndex={-1} className="flex-1 focus:outline-none w-full max-w-6xl mx-auto px-4 py-8">{children}</main>

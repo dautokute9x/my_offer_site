@@ -20,7 +20,7 @@ export default async function SiteHeader() {
         </Link>
         <nav aria-label="Menu chính" className="hidden items-center gap-5 md:flex">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="py-2 hover:text-brand">
+            <Link key={n.href} href={n.href} className="inline-flex min-h-11 items-center hover:text-brand">
               {n.label}
             </Link>
           ))}

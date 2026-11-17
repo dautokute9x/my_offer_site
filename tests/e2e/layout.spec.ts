@@ -57,3 +57,12 @@ test("lịch phỏng vấn hiện giờ Nhật (JST, UTC+9)", async ({ page }) =
   await page.goto("/lich-phong-van");
   await expect(page.getByRole("region").getByText("giờ Nhật (JST, UTC+9)").first()).toBeVisible();
 });
+
+test("skip link khi focus không đẩy bố cục", async ({ page }) => {
+  await page.goto("/viec-lam");
+  const h1 = page.getByRole("heading", { level: 1 });
+  const before = (await h1.boundingBox())!.y;
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Bỏ qua đến nội dung chính" })).toBeFocused();
+  expect((await h1.boundingBox())!.y).toBe(before);
+});

@@ -38,3 +38,9 @@ export function dayHeading(dateKey: string): string {
   const [y, m, d] = dateKey.split("-");
   return `${WEEKDAYS[new Date(Date.UTC(+y, +m - 1, +d)).getUTCDay()]}, ${d}/${m}/${y}`;
 }
+
+// Tham số ?tu=/?den= dạng YYYY-MM-DD có thật (bỏ 2026-02-30); lặp lại thì lấy giá trị đầu.
+export function parseDateKey(v: string | string[] | undefined): string | undefined {
+  const s = [v ?? []].flat()[0] ?? "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s) ? s : undefined;
+}
