@@ -5,13 +5,14 @@ import { siteDefaults } from "@/lib/site-defaults";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { MAX_CV_BYTES, MIME, sniffFileKind, type ApplicationInput } from "@/lib/validate";
 
-export type ApplicationError = "rate_limited" | "job_closed" | "invalid_file" | "not_found" | "stale" | "server_error";
+export type ApplicationError = "rate_limited" | "job_closed" | "invalid_file" | "file_too_large" | "not_found" | "stale" | "server_error";
 type Upload = { path: string; token: string; signedUrl: string };
 
 const ERRORS: Record<ApplicationError, [number, string]> = {
   rate_limited: [429, "Bạn đã gửi quá nhiều hồ sơ, vui lòng thử lại sau 10 phút."],
   job_closed: [409, "Tin này đã ngừng tuyển."],
   invalid_file: [422, "Tệp CV không hợp lệ hoặc bị lỗi, vui lòng chọn lại tệp PDF/DOC/DOCX/XLS/XLSX."],
+  file_too_large: [413, "Tệp CV vượt quá 10 MB, vui lòng chọn tệp nhỏ hơn."],
   not_found: [404, "Không tìm thấy hồ sơ, vui lòng gửi lại."],
   stale: [409, "Hồ sơ vừa được cập nhật, vui lòng gửi lại."],
   server_error: [500, "Lỗi máy chủ, vui lòng thử lại."],
@@ -98,7 +99,7 @@ export async function completeApplication(id: string, idempotencyKey: string): P
     // Hồ sơ vẫn pending_upload: gửi lại cùng key sẽ nhận signed URL mới.
     const { error: re } = await bucket.remove([path]);
     if (re) return fail("remove", re);
-    return { error: "invalid_file" };
+    return { error: typeof size === "number" && size > MAX_CV_BYTES ? "file_too_large" : "invalid_file" };
   }
   // Chỉ đánh dấu new nếu dòng vẫn trỏ tới đúng object vừa kiểm tra (gửi lại song song có thể đã đổi cv_path).
   const { data: upd, error: ue } = await sb.from("applications").update({ status: "new", cv_size: size })
