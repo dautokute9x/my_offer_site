@@ -11,7 +11,7 @@ export default function Interviews({ events }: { events: InterviewEvent[] }) {
       <ul className="space-y-2">
         {events.map((e) => (
           <li key={e.id} className="rounded border border-warn/40 bg-orange-50 p-3">
-            <p className="font-semibold text-warn">🗓 {formatJst(e.startsAt)}</p>
+            <p className="font-semibold text-warn"><span aria-hidden="true">🗓</span> {formatJst(e.startsAt)}</p>
             <p className="hidden text-sm group-data-[vn=true]:block">= {formatVn(e.startsAt)}</p>
             <p className="text-sm">{FORMAT[e.format]}{e.publicNote && ` · ${e.publicNote}`}</p>
           </li>

@@ -36,9 +36,9 @@ export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Ca
       {job.content.summary.vi && (
         <p className="line-clamp-3 hidden text-sm text-slate-700 group-data-[view=poster]/grid:block">{job.content.summary.vi}</p>
       )}
-      <p className="text-sm">📍 {places.join(", ") || UNCONFIRMED}</p>
+      <p className="text-sm"><span aria-hidden="true">📍</span> {places.join(", ") || UNCONFIRMED}</p>
       <p className="text-sm">
-        💴 {salary || `Lương: ${UNCONFIRMED}`}
+        <span aria-hidden="true">💴</span> {salary || `Lương: ${UNCONFIRMED}`}
         {job.salaryNegotiable === true && (
           <span className="ml-2 rounded bg-blue-50 px-2 py-0.5 text-xs text-brand">Có thể thương lượng</span>
         )}
@@ -53,7 +53,7 @@ export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Ca
       )}
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1 text-sm">
         {job.nextInterview ? (
-          <span className="font-semibold text-warn">🗓 PV {formatJst(job.nextInterview.startsAt)}</span>
+          <span className="font-semibold text-warn"><span aria-hidden="true">🗓</span> <abbr title="Phỏng vấn">PV</abbr> {formatJst(job.nextInterview.startsAt)}</span>
         ) : (
           <span />
         )}
