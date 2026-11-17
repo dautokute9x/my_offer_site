@@ -1,4 +1,7 @@
 import type { JpLevel } from "./types";
+import detail from "./i18n/messages/vi-detail";
+
+export type ValidationWords = typeof detail.form.validation;
 
 export interface ApplicationInput {
   kind: "apply" | "consult";
@@ -36,7 +39,7 @@ const ZIP_MIME = ["application/zip", "application/x-zip-compressed"];
 // Trust boundary: input may be any shape, so never call string methods on raw values.
 const str = (x: unknown) => (typeof x === "string" ? x.trim() : "");
 
-export function validateApplication(i: ApplicationInput): Record<string, string> {
+export function validateApplication(i: ApplicationInput, M: ValidationWords = detail.form.validation): Record<string, string> {
   const e: Record<string, string> = {};
   const kind = str(i?.kind);
   const name = str(i?.fullName);
@@ -44,26 +47,26 @@ export function validateApplication(i: ApplicationInput): Record<string, string>
   const phone = str(i?.phone);
   const fb = str(i?.facebook);
 
-  if (kind !== "apply" && kind !== "consult") e.kind = "Loại yêu cầu không hợp lệ.";
-  if (kind === "apply" && !/^[A-Za-z0-9]{1,20}$/.test(str(i?.jobCode))) e.jobCode = "Mã việc làm không hợp lệ.";
-  if (name.length < 1 || name.length > 100) e.fullName = "Họ tên cần từ 1 đến 100 ký tự.";
-  if (email && (email.length > 254 || !EMAIL.test(email))) e.email = "Email không hợp lệ.";
-  if (phone && !PHONE.test(phone.replace(/[\s.-]/g, ""))) e.phone = "Số điện thoại không hợp lệ.";
-  if (fb && !FB_HANDLE.test(fb) && !FB_URL.test(fb)) e.facebook = "Facebook không hợp lệ.";
-  if (!email && !phone && !fb) e.contact = "Cần ít nhất một cách liên hệ: email, điện thoại/Zalo hoặc Facebook.";
-  if (typeof i?.note !== "string" || i.note.trim().length > 2000) e.note = "Ghi chú tối đa 2000 ký tự.";
-  if (i?.consent !== true) e.consent = "Bạn cần đồng ý xử lý dữ liệu cá nhân.";
+  if (kind !== "apply" && kind !== "consult") e.kind = M.kind;
+  if (kind === "apply" && !/^[A-Za-z0-9]{1,20}$/.test(str(i?.jobCode))) e.jobCode = M.jobCode;
+  if (name.length < 1 || name.length > 100) e.fullName = M.fullName;
+  if (email && (email.length > 254 || !EMAIL.test(email))) e.email = M.email;
+  if (phone && !PHONE.test(phone.replace(/[\s.-]/g, ""))) e.phone = M.phone;
+  if (fb && !FB_HANDLE.test(fb) && !FB_URL.test(fb)) e.facebook = M.facebook;
+  if (!email && !phone && !fb) e.contact = M.contact;
+  if (typeof i?.note !== "string" || i.note.trim().length > 2000) e.note = M.note;
+  if (i?.consent !== true) e.consent = M.consent;
   const cv = str(i?.consentVersion);
-  if (!cv || cv.length > 50) e.consentVersion = "Phiên bản đồng ý không hợp lệ.";
-  if (!JP_LEVELS.includes(i?.jpLevel as string)) e.jpLevel = "Trình độ tiếng Nhật không hợp lệ.";
+  if (!cv || cv.length > 50) e.consentVersion = M.consentVersion;
+  if (!JP_LEVELS.includes(i?.jpLevel as string)) e.jpLevel = M.jpLevel;
   const key = str(i?.idempotencyKey);
-  if (!key || key.length > 100) e.idempotencyKey = "Mã yêu cầu không hợp lệ.";
+  if (!key || key.length > 100) e.idempotencyKey = M.idempotencyKey;
 
   const f: unknown = i?.file;
   if (f == null) {
-    if (kind === "apply") e.file = "Vui lòng đính kèm CV.";
+    if (kind === "apply") e.file = M.fileMissing;
   } else if (typeof f !== "object") {
-    e.file = "Tệp không hợp lệ.";
+    e.file = M.fileInvalid;
   } else {
     const { name: fname, size, type } = f as Record<string, unknown>;
     const n = str(fname);
@@ -71,10 +74,10 @@ export function validateApplication(i: ApplicationInput): Record<string, string>
     const ext = dot > 0 ? n.slice(dot + 1).toLowerCase() : "";
     const mime = str(type).toLowerCase();
     const mimeOk = !mime || mime === "application/octet-stream" || mime === MIME[ext] || ((ext === "docx" || ext === "xlsx") && ZIP_MIME.includes(mime));
-    if (n.length > 200) e.file = "Tên tệp tối đa 200 ký tự.";
-    else if (!ALLOWED_EXT.includes(ext)) e.file = "CV chỉ nhận PDF, Word hoặc Excel (pdf, doc, docx, xls, xlsx).";
-    else if (typeof size !== "number" || !Number.isInteger(size) || size <= 0 || size > MAX_CV_BYTES) e.file = "CV phải lớn hơn 0 và không quá 10 MB.";
-    else if (!mimeOk) e.file = "Loại tệp không khớp với phần mở rộng.";
+    if (n.length > 200) e.file = M.fileName;
+    else if (!ALLOWED_EXT.includes(ext)) e.file = M.fileExt;
+    else if (typeof size !== "number" || !Number.isInteger(size) || size <= 0 || size > MAX_CV_BYTES) e.file = M.fileSize;
+    else if (!mimeOk) e.file = M.fileMime;
   }
   return e;
 }

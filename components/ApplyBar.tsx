@@ -1,10 +1,13 @@
 import type { Job } from "@/lib/types";
+import { fmt } from "@/lib/i18n/format";
+import { getT } from "@/lib/i18n/server";
 
 const cls = "btn btn-primary";
 
 // Task 10 gắn form vào #ung-tuyen.
-export function ApplyButton({ job }: { job: Pick<Job, "code"> }) {
-  return <a href="#ung-tuyen" className={cls} aria-label={`Ứng tuyển tin ${job.code}`}>Ứng tuyển</a>;
+export async function ApplyButton({ job }: { job: Pick<Job, "code"> }) {
+  const { t } = await getT();
+  return <a href="#ung-tuyen" className={cls} aria-label={fmt(t.detail.applyLabel, { code: job.code })}>{t.detail.apply}</a>;
 }
 
 export default function ApplyBar({ job }: { job: Pick<Job, "code" | "titleVi"> }) {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 import { fontVars } from "@/lib/fonts";
 import { MESSAGES } from "@/lib/i18n/messages";
@@ -15,7 +16,7 @@ export default function GlobalNotFound() {
           <h1 className="text-[length:var(--text-display-s)]">{vi.title}</h1>
           <p className="standfirst mt-6">{vi.body}</p>
           <p lang="en" className="mt-2 text-muted">{en.body}</p>
-          <a href="/viec-lam" className="btn btn-primary mt-8">{vi.cta}</a>
+          <Link href="/viec-lam" className="btn btn-primary mt-8">{vi.cta}</Link>
         </main>
       </body>
     </html>
