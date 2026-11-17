@@ -81,7 +81,7 @@ Lưu ý vận hành (lỗi nhỏ đã biết, chưa sửa):
 
 - cập nhật/xóa bản ghi không tồn tại có thể báo thành công (0 dòng bị ảnh hưởng);
 - nhập CSV 2000 dòng mất ≈2 giây trên Postgres cục bộ (giới hạn statement của Supabase là 8 giây; chưa đo trên Supabase thật); CSV ghi đè toàn bộ trường của tin đã có (ô trống xóa nội dung; lịch phỏng vấn chỉ được thêm);
-- "Dọn hồ sơ quá hạn lưu" xử lý một lượt không giới hạn số hồ sơ, có thể chậm khi tồn đọng nhiều; nếu xóa CV lỗi thì có thể còn tệp mồ côi trong Storage (ghi log);
+- "Dọn hồ sơ quá hạn lưu" xử lý tối đa 200 hồ sơ (≈20 giây) mỗi lần bấm, còn tồn thì bấm lại; chưa có dọn tự động theo lịch; nếu xóa CV lỗi thì có thể còn tệp mồ côi trong Storage (ghi log);
 - ghi chú nội bộ hiển thị tác giả dạng "QTV <uuid>"; chưa có `Referrer-Policy`;
 - tin chi tiết render động (không ISR), mỗi lượt xem gọi một RPC;
 - nhiều lỗi nhỏ về giao diện/accessibility của Giai đoạn 1 xem `docs/superpowers/notes/2026-11-16-giai-doan-1-ket-qua.md`.
