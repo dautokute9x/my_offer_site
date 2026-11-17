@@ -9,7 +9,7 @@ Tạo project mới trên supabase.com, chọn region gần người dùng, đ�
 Không cần làm gì: migration 0001 tự chạy `create extension if not exists pg_trgm with schema extensions` (Supabase đã có schema `extensions`). Nếu SQL Editor báo thiếu quyền tạo extension, bật `pg_trgm` ở Database > Extensions, **schema `extensions`**, rồi chạy lại 0001.
 
 ## 3. Chạy migration theo thứ tự
-Chạy từng tệp trong `supabase/migrations/` theo đúng thứ tự **0001 → 0002 → 0003 → 0004 → 0005 → 0006**: dán nội dung vào SQL Editor và Run, hoặc dùng Supabase CLI (`supabase link` rồi `supabase db push`). Đừng chạy lại migration đã chạy. Migration 0001 tạo bucket `cvs` (private), 0003 đặt giới hạn 10 MB và loại tệp cho bucket.
+Chạy từng tệp trong `supabase/migrations/` theo đúng thứ tự **0001 → 0002 → 0003 → 0004 → 0005 → 0006**: dán nội dung vào SQL Editor và Run, hoặc dùng Supabase CLI (`supabase link` rồi `supabase db push`). Đừng chạy lại migration đã chạy. Nếu một migration báo lỗi, **dừng lại**, đừng chạy tệp tiếp theo: sửa nguyên nhân rồi chạy lại đúng tệp đó. Migration 0001 tạo bucket `cvs` (private), 0003 đặt giới hạn 10 MB và loại tệp cho bucket.
 
 ## 4. Seed dữ liệu
 - `supabase/seed_catalog.sql`: danh mục (tỉnh, ngành nghề...) và cài đặt site. Chạy **một lần**; chạy lại sẽ lỗi unique (an toàn, không ghi gì).
@@ -17,6 +17,8 @@ Chạy từng tệp trong `supabase/migrations/` theo đúng thứ tự **0001 �
 
 ## 5. Tắt đăng ký công khai
 Authentication > Sign In / Providers (hoặc Settings): tắt **Allow new users to sign up**, để chỉ người bạn tạo mới đăng nhập được.
+
+Cũng ở Authentication > URL Configuration: đặt **Site URL** là `https://[ten-mien]` (địa chỉ website thật), để link trong email của Supabase không trỏ về `localhost`.
 
 ## 6. Tạo tài khoản quản trị
 Authentication > Users > Add user: nhập email và mật khẩu (tick auto-confirm). Rồi trong SQL Editor:
@@ -41,7 +43,7 @@ Import repo vào Vercel (Next.js) và đặt trong Settings > Environment Variab
 | `SUPABASE_SERVICE_ROLE_KEY` | khóa service_role (chỉ server) |
 | `IP_HASH_SALT` | chuỗi ngẫu nhiên dài (`openssl rand -hex 32`) |
 
-Deploy. Sau đó vào `/admin/noi-dung` điền thương hiệu, liên hệ, nội dung chính sách và chỉ bật `policiesConfirmed` khi đã rà soát.
+Deploy. Biến `NEXT_PUBLIC_*` được gắn vào mã lúc build: đổi giá trị thì phải **Redeploy** mới có hiệu lực. Sau đó vào `/admin/noi-dung` điền thương hiệu, liên hệ, nội dung chính sách và chỉ bật `policiesConfirmed` khi đã rà soát.
 
 ## 9. Kiểm tra sau triển khai
 - [ ] Gửi thử một hồ sơ với **PDF thật** ở trang một tin; nhận được mã `HS-xxxxxx`.
