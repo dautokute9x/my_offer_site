@@ -28,6 +28,10 @@ const config = (phase: string): NextConfig => {
   if (phase === PHASE_PRODUCTION_BUILD && process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SITE_URL) {
     throw new Error("Thiếu NEXT_PUBLIC_SITE_URL (bắt buộc khi build production có NEXT_PUBLIC_SUPABASE_URL).");
   }
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (site && !/^https?:\/\/[^/\s]+/.test(site)) {
+    throw new Error(`NEXT_PUBLIC_SITE_URL phải là địa chỉ đầy đủ có https://, ví dụ https://ten-mien.vercel.app (đang là "${site}").`);
+  }
   return nextConfig;
 };
 
