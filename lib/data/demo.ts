@@ -3,7 +3,7 @@ import { buildDemoJobs } from "@/lib/demo/jobs";
 import type { JobFilters, JobSummary } from "@/lib/filters";
 import { normCode, normText } from "@/lib/normalize";
 import { jstDateKey } from "@/lib/time";
-import type { InterviewEvent, Job, JpLevel } from "@/lib/types";
+import type { InterviewEvent, InterviewWithJobSummary, Job, JpLevel } from "@/lib/types";
 
 export const PAGE_SIZE = 12;
 type Opts = { now?: Date };
@@ -126,17 +126,20 @@ export async function listUpcomingInterviews(
   const { jobs, interviews, open, now } = load(opts.now);
   const pids = demoCatalog.prefectures.filter((p) => o.prefectures.includes(p.code)).map((p) => p.id);
   const oids = occupationIdSet([], o.occupations);
-  const out: Array<InterviewEvent & { job: Job }> = [];
+  // Như upcoming_interviews: không có `to` thì đến hết hôm nay + 60 ngày (JST); tối đa 500 lịch.
+  const to = o.to || jstDateKey(new Date(now.getTime() + 60 * 86_400_000).toISOString());
+  const out: InterviewWithJobSummary[] = [];
   for (const i of interviews) {
     const job = jobs.find((j) => j.id === i.jobId)!;
     const day = jstDateKey(i.startsAt);
     if (i.status !== "scheduled" || Date.parse(i.startsAt) <= now.getTime() || !open(job)) continue;
-    if ((o.from && day < o.from) || (o.to && day > o.to)) continue;
+    if ((o.from && day < o.from) || day > to) continue;
     if (pids.length && !job.prefectureIds.some((p) => pids.includes(p))) continue;
     if (o.occupations.length && !job.occupationIds.some((x) => oids.includes(x))) continue;
-    out.push({ ...i, job });
+    const { id, code, slug, status, isDemo, titleVi, titleJa, prefectureIds, occupationIds } = job;
+    out.push({ ...i, job: { id, code, slug, status, isDemo, titleVi, titleJa, prefectureIds, occupationIds } });
   }
-  return out.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  return out.sort((a, b) => a.startsAt.localeCompare(b.startsAt)).slice(0, 500);
 }
 
 export async function countOpenJobsByGroup() {

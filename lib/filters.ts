@@ -24,7 +24,7 @@ export function parseFilters(sp: SP, catalog: Catalog): JobFilters {
   const sx = first(sp.sx);
   const page = int(first(sp.trang));
   return {
-    q: first(sp.q).trim(),
+    q: first(sp.q).trim().slice(0, 100).trim(),
     prefectures: list(sp.tinh, new Set(catalog.prefectures.map((p) => p.code))),
     groups: list(sp.nhom, new Set(catalog.groups.map((g) => g.slug))),
     occupations: list(sp.nghe, new Set(catalog.occupations.map((o) => o.slug))),

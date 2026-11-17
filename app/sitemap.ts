@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getCatalog, searchJobs } from "@/lib/data";
+import { getCatalog, isDemoMode, searchJobs } from "@/lib/data";
+import { listSitemapJobs } from "@/lib/data/supabase";
 import { jobHref, parseFilters } from "@/lib/filters";
 
 export const revalidate = 3600;
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+async function demoJobs() {
   const catalog = await getCatalog();
   const jobs = [];
   // Duyệt từng trang searchJobs (tin đang tuyển); bỏ tin demo.
@@ -13,6 +14,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     count = r.pageCount;
     jobs.push(...r.items.filter((j) => !j.isDemo));
   }
+  return jobs;
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const jobs = isDemoMode() ? await demoJobs() : await listSitemapJobs();
   const paths = ["/", "/viec-lam", "/lich-phong-van", "/gioi-thieu", "/lien-he", "/chinh-sach-bao-mat", "/dieu-khoan"];
   return [
     ...paths.map((p) => ({ url: p })),

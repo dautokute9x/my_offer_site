@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { siteDefaults } from "@/lib/site-defaults";
 import type { ApplicationInput } from "@/lib/validate";
 
 // Giả lập Supabase admin: 1 dòng applications + 1 object Storage.
@@ -136,16 +137,25 @@ describe("startApplication", () => {
     expect(rpc.mock.calls[0][0]).toBe("start_application");
     expect(p.ipHash).toMatch(/^[0-9a-f]{64}$/);
     expect(JSON.stringify(p)).not.toContain("1.2.3.4");
-    expect(p).toMatchObject({ cvExt: "pdf", cvMime: "application/pdf", consentVersion: "v1" });
+    expect(p).toMatchObject({ cvExt: "pdf", cvMime: "application/pdf", consentVersion: siteDefaults.consentVersion });
     expect(r).toEqual({ id: ID, refCode: "HS-ABCDEF", upload: { path: PATH, token: "tok", signedUrl: `https://x/upload/${PATH}?token=tok` } });
     expect(remove).not.toHaveBeenCalled();
   });
-  it("gửi lại hồ sơ đang pending_upload → không xóa object, URL không upsert", async () => {
-    rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "pending_upload", cvPath: PATH, created: false }, error: null });
+  it("gửi lại hồ sơ đang pending_upload → xóa object cũ của thư mục TRƯỚC khi cấp URL mới (không upsert)", async () => {
+    dirFiles = ["old1.pdf", "old2.pdf"];
+    rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "pending_upload", cvPath: PATH, created: false, createdAt: "2026-11-02T00:00:00.000Z" }, error: null });
     const r = await startApplication(input, "1.2.3.4");
-    expect(remove).not.toHaveBeenCalled();
+    expect(remove).toHaveBeenCalledWith([`cvs/2026/11/${ID}/old1.pdf`, `cvs/2026/11/${ID}/old2.pdf`]);
+    expect(remove.mock.invocationCallOrder[0]).toBeLessThan(createSignedUploadUrl.mock.invocationCallOrder[0]);
     expect(createSignedUploadUrl).toHaveBeenCalledWith(PATH);
     expect(r).toMatchObject({ upload: { path: PATH } });
+  });
+  it("gửi lại pending_upload mà dọn Storage lỗi → server_error, không cấp URL", async () => {
+    dirFiles = ["old1.pdf"];
+    remove.mockResolvedValueOnce({ data: null, error: { message: "boom" } } as never);
+    rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "pending_upload", cvPath: PATH, created: false, createdAt: "2026-11-02T00:00:00.000Z" }, error: null });
+    expect(await startApplication(input, "1.2.3.4")).toEqual({ error: "server_error" });
+    expect(createSignedUploadUrl).not.toHaveBeenCalled();
   });
   it("hồ sơ đã new → refCode, không upload", async () => {
     rpc.mockResolvedValue({ data: { id: ID, refCode: "HS-ABCDEF", status: "new", cvPath: PATH, created: false }, error: null });

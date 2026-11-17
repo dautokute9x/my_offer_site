@@ -2,6 +2,8 @@
 begin;
 
 insert into jobs (code, slug, status, title_vi, title_ja) values ('closed1', 'closed-1', 'closed', 'Tin đóng', '終了');
+-- consent_version lấy từ site_settings, không lấy giá trị client ('v1' trong req).
+update site_settings set data = data || '{"consentVersion": "v-site"}' where id = 1;
 
 create function pg_temp.req(key text, ip text, job text default '00412', kind text default 'apply', ext text default 'pdf') returns jsonb language sql as $$
   select jsonb_build_object('idempotencyKey', key, 'ipHash', ip, 'kind', kind, 'jobCode', job, 'fullName', 'Nguyễn Văn A',
@@ -25,7 +27,7 @@ begin
   if a->>'status' <> 'pending_upload' then raise exception 'có CV phải pending_upload: %', a; end if;
   if a->>'cvPath' !~ ('^cvs/\d{4}/\d{2}/' || (a->>'id') || '/[0-9a-f-]{36}\.pdf$') then raise exception 'cvPath sai: %', a->>'cvPath'; end if;
   if not exists (select 1 from applications where id = (a->>'id')::uuid and job_id is not null and job_title is not null
-      and consent_version = 'v1' and consent_at is not null and delete_after = (current_date + interval '12 months')::date
+      and consent_version = 'v-site' and consent_at is not null and delete_after = (current_date + interval '12 months')::date
       and cv_path = a->>'cvPath' and cv_mime = 'application/pdf') then raise exception 'dòng thiếu dữ liệu'; end if;
 
   r := start_application(pg_temp.req('k-c', 'ip-c', null, 'consult'));
@@ -63,6 +65,24 @@ begin
   -- Đã new: gửi lại không đổi gì.
   b := start_application(pg_temp.req('k-r', 'ip-r') || '{"email": "khac@example.vn"}');
   if b->>'status' <> 'new' or (select email from applications where id = (r->>'id')::uuid) <> 'moi@example.vn' then raise exception 'dòng new bị sửa: %', b; end if;
+
+  -- Gửi lại khi pending_upload: tối đa 5 lần / hồ sơ (mỗi lần một signed URL mới), lần 6 rate_limited, dòng không đổi.
+  r := start_application(pg_temp.req('k-u', 'ip-u'));
+  for i in 1..5 loop
+    b := start_application(pg_temp.req('k-u', 'ip-u'));
+    if b ? 'error' or b->>'createdAt' is null then raise exception 'gửi lại lần % sai: %', i, b; end if;
+  end loop;
+  if b->>'createdAt' <> (select iso_utc(created_at) from applications where id = (r->>'id')::uuid) then raise exception 'createdAt sai: %', b; end if;
+  if r ? 'createdAt' then raise exception 'tạo mới không trả createdAt: %', r; end if;
+  if (select upload_attempts from applications where id = (r->>'id')::uuid) <> 5 then raise exception 'upload_attempts sai'; end if;
+  r := start_application(pg_temp.req('k-u', 'ip-u'));
+  if r->>'error' is distinct from 'rate_limited' then raise exception 'gửi lại lần 6 phải rate_limited: %', r; end if;
+  if (select cv_path from applications where idempotency_key = 'k-u') <> b->>'cvPath' then raise exception 'lần 6 vẫn đổi path'; end if;
+
+  -- Thiếu consentVersion trong site_settings → dùng giá trị server gửi.
+  update site_settings set data = data - 'consentVersion' where id = 1;
+  r := start_application(pg_temp.req('k-cv', 'ip-cv'));
+  if (select consent_version from applications where idempotency_key = 'k-cv') <> 'v1' then raise exception 'không dự phòng consent'; end if;
 
   r := start_application(pg_temp.req('k-x', 'ip-x', 'closed1'));
   if r->>'error' is distinct from 'job_closed' then raise exception 'tin đóng phải job_closed: %', r; end if;

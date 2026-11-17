@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rpc = vi.fn();
 const orders: string[] = [];
+const calls: string[] = [];
+let pages: { data: unknown; error: unknown }[] = [];
 let tables: Record<string, { data: unknown; error: unknown }> = {};
 let single: { data: unknown; error: unknown } = { data: null, error: null };
 vi.mock("@/lib/supabase/public", () => ({
@@ -13,7 +15,10 @@ vi.mock("@/lib/supabase/public", () => ({
         const q: any = {
           order: (c: string) => { orders.push(`${name}.${c}`); return q; },
           then: (res: (v: unknown) => void) => res(tables[name]),
-          eq: () => ({ maybeSingle: async () => single }),
+          eq: (c: string, v: unknown) => (calls.push(`${name}.eq.${c}.${v}`), q),
+          or: (f: string) => (calls.push(`${name}.or.${f}`), q),
+          range: async (a: number, b: number) => (calls.push(`${name}.range.${a}-${b}`), pages.shift()),
+          maybeSingle: async () => single,
         };
         return q;
       },
@@ -26,7 +31,7 @@ import { parseFilters } from "@/lib/filters";
 
 const ok = (data: unknown) => ({ data, error: null });
 const now = new Date("2026-01-01T00:00:00Z");
-beforeEach(() => { vi.clearAllMocks(); orders.length = 0; vi.spyOn(console, "error").mockImplementation(() => {}); rpc.mockResolvedValue(ok(null)); });
+beforeEach(() => { vi.clearAllMocks(); orders.length = 0; calls.length = 0; vi.spyOn(console, "error").mockImplementation(() => {}); rpc.mockResolvedValue(ok(null)); });
 
 describe("lib/data/supabase rpc", () => {
   it("tên RPC và tham số", async () => {
@@ -86,5 +91,19 @@ describe("lib/data/supabase bảng", () => {
     expect(await sb.getSiteSettings()).toBeNull();
     single = { data: null, error: { message: "x" } };
     await expect(sb.getSiteSettings()).rejects.toThrow("Không tải được dữ liệu");
+  });
+});
+
+describe("listSitemapJobs", () => {
+  it("lọc tin đang tuyển không demo, phân trang 1000 dòng", async () => {
+    const row = { code: "A1", slug: "a", updated_at: "2026-01-01T00:00:00.000Z" };
+    pages = [ok(Array(1000).fill(row)), ok([{ ...row, code: "B2" }])];
+    const r = await sb.listSitemapJobs(now);
+    expect(r).toHaveLength(1001);
+    expect(r[1000]).toEqual({ code: "B2", slug: "a", updatedAt: "2026-01-01T00:00:00.000Z" });
+    expect(calls).toEqual(expect.arrayContaining(["jobs.eq.status.published", "jobs.eq.is_demo.false",
+      `jobs.or.valid_through.is.null,valid_through.gt.${now.toISOString()}`, "jobs.range.0-999", "jobs.range.1000-1999"]));
+    pages = [{ data: null, error: { code: "X" } }];
+    await expect(sb.listSitemapJobs(now)).rejects.toThrow("Không tải được dữ liệu");
   });
 });

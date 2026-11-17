@@ -41,7 +41,7 @@ Mẫu ở `.env.example` (sao chép thành `.env.local`).
 - `proxy.ts` — làm mới phiên Supabase và chuyển người chưa đăng nhập khỏi `/admin` (bỏ qua ở chế độ demo).
 - `lib/data/` — nguồn dữ liệu: `demo.ts` (mẫu) hoặc `supabase.ts` (RPC), chọn theo `isDemoMode()`.
 - `lib/applications/`, `lib/admin/`, `lib/supabase/` — xử lý hồ sơ, nhập liệu quản trị, các client Supabase.
-- `supabase/migrations/0001–0005` — schema, RLS, API; `supabase/seed_catalog.sql`, `seed_demo.sql` — dữ liệu.
+- `supabase/migrations/0001–0006` — schema, RLS, API; `supabase/seed_catalog.sql`, `seed_demo.sql` — dữ liệu.
 - `tests/unit`, `tests/db`, `tests/e2e` — các bộ test.
 - `docs/huong-dan-trien-khai.md` — **hướng dẫn triển khai Supabase + Vercel**.
 
@@ -80,7 +80,7 @@ Chưa kiểm chứng được khi chưa có dự án Supabase thật (cần ch�
 Lưu ý vận hành (lỗi nhỏ đã biết, chưa sửa):
 
 - cập nhật/xóa bản ghi không tồn tại có thể báo thành công (0 dòng bị ảnh hưởng);
-- nhập CSV 2000 dòng chưa đo thời gian (có thể chạm giới hạn thời gian); CSV ghi đè toàn bộ trường của tin đã có (ô trống xóa nội dung; lịch phỏng vấn chỉ được thêm);
+- nhập CSV 2000 dòng mất ≈2 giây trên Postgres cục bộ (giới hạn statement của Supabase là 8 giây; chưa đo trên Supabase thật); CSV ghi đè toàn bộ trường của tin đã có (ô trống xóa nội dung; lịch phỏng vấn chỉ được thêm);
 - "Dọn hồ sơ quá hạn lưu" xử lý một lượt không giới hạn số hồ sơ, có thể chậm khi tồn đọng nhiều; nếu xóa CV lỗi thì có thể còn tệp mồ côi trong Storage (ghi log);
 - ghi chú nội bộ hiển thị tác giả dạng "QTV <uuid>"; chưa có `Referrer-Policy`;
 - tin chi tiết render động (không ISR), mỗi lượt xem gọi một RPC;

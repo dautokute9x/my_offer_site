@@ -6,6 +6,10 @@ const back = (f: ReturnType<typeof parseFilters>) =>
   parseFilters(Object.fromEntries(new URLSearchParams(filtersToQuery(f))), demoCatalog);
 
 describe("filters", () => {
+  it("q tối đa 100 ký tự", () => {
+    expect(parseFilters({ q: "  " + "a".repeat(150) }, demoCatalog).q).toBe("a".repeat(100));
+    expect(parseFilters({ q: " ky su " }, demoCatalog).q).toBe("ky su");
+  });
   it("bỏ giá trị rác và round-trip", () => {
     const f = parseFilters({ tinh: "13,27,99", trang: "-3", tiengnhat: "N9", luong: "25-", ky: "thang" }, demoCatalog);
     expect(f.prefectures).toEqual(["13", "27"]);

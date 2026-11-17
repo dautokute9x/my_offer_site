@@ -5,16 +5,11 @@ Làm lần lượt 9 bước. Thay các giá trị trong `[...]` bằng giá tr�
 ## 1. Tạo dự án Supabase
 Tạo project mới trên supabase.com, chọn region gần người dùng, đặt mật khẩu DB và lưu lại. Ghi lại ở Project Settings > API: **Project URL**, khóa **anon**, khóa **service_role** (bí mật).
 
-## 2. Bật extension `pg_trgm` và `unaccent`
-Database > Extensions: bật `pg_trgm` và `unaccent`, **schema `extensions`** (migration dùng `extensions.gin_trgm_ops`). Hoặc trong SQL Editor:
-
-```sql
-create extension if not exists pg_trgm schema extensions;
-create extension if not exists unaccent schema extensions;
-```
+## 2. Extension `pg_trgm`
+Không cần làm gì: migration 0001 tự chạy `create extension if not exists pg_trgm with schema extensions` (Supabase đã có schema `extensions`). Nếu SQL Editor báo thiếu quyền tạo extension, bật `pg_trgm` ở Database > Extensions, **schema `extensions`**, rồi chạy lại 0001.
 
 ## 3. Chạy migration theo thứ tự
-Chạy từng tệp trong `supabase/migrations/` theo đúng thứ tự **0001 → 0002 → 0003 → 0004 → 0005**: dán nội dung vào SQL Editor và Run, hoặc dùng Supabase CLI (`supabase link` rồi `supabase db push`). Đừng chạy lại migration đã chạy. Migration 0001 tạo bucket `cvs` (private), 0003 đặt giới hạn 10 MB và loại tệp cho bucket.
+Chạy từng tệp trong `supabase/migrations/` theo đúng thứ tự **0001 → 0002 → 0003 → 0004 → 0005 → 0006**: dán nội dung vào SQL Editor và Run, hoặc dùng Supabase CLI (`supabase link` rồi `supabase db push`). Đừng chạy lại migration đã chạy. Migration 0001 tạo bucket `cvs` (private), 0003 đặt giới hạn 10 MB và loại tệp cho bucket.
 
 ## 4. Seed dữ liệu
 - `supabase/seed_catalog.sql`: danh mục (tỉnh, ngành nghề...) và cài đặt site. Chạy **một lần**; chạy lại sẽ lỗi unique (an toàn, không ghi gì).

@@ -142,9 +142,32 @@ describe("actions", () => {
     expect(removeAt).not.toHaveBeenCalled();
     expect(r.ok).toMatch(/0 hồ sơ/);
   });
+  it("purge: tối đa 200 dòng mỗi lần bấm → more + nhắc bấm lại", async () => {
+    removeAt.mockResolvedValue({ ok: true });
+    let next = 0;
+    const uuid = (i: number) => `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`;
+    results = [(op, ctx) => ctx.includes("delete") ? { data: [{ id: uuid(next), created_at: T }], error: null }
+      : { data: Array.from({ length: 50 }, () => ({ id: uuid(++next) })), error: null }];
+    const r = await (await load()).purgeExpired();
+    expect(removeAt).toHaveBeenCalledTimes(200);
+    expect(r).toMatchObject({ deleted: 200, failed: 0, more: true });
+    expect(r.ok).toMatch(/Còn hồ sơ cần dọn — bấm lại để tiếp tục\./);
+  });
+  it("purge: quá ~20 giây → dừng, more", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-11-16T00:00:00Z"));
+    removeAt.mockImplementation(async () => { vi.setSystemTime(Date.now() + 6_000); return { ok: true }; });
+    const rows = Array.from({ length: 10 }, (_, i) => ({ id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`, created_at: T }));
+    let k = 0;
+    const r = await purge([rows], () => [rows[k++]]);
+    vi.useRealTimers();
+    expect(removeAt.mock.calls.length).toBeLessThan(10);
+    expect(r).toMatchObject({ more: true });
+  });
   it("purge: dòng xóa + storage ok → tính deleted", async () => {
     removeAt.mockResolvedValue({ ok: true });
     const r = await purge([[{ id: A, created_at: T }]], () => [{ id: A, created_at: T }]);
     expect(r.ok).toMatch(/Đã xóa 1 hồ sơ/);
+    expect(r).toMatchObject({ deleted: 1, failed: 0 });
+    expect(r.more).toBeUndefined();
   });
 });

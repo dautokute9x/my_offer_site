@@ -1,3 +1,6 @@
+create schema if not exists extensions;
+create extension if not exists pg_trgm with schema extensions;
+
 -- Giai đoạn 2: schema, RLS, bucket CV private, norm_text, trigger search_text/updated_at.
 -- Supabase cấp ALL cho anon/authenticated trên bảng public: mọi bảng PHẢI bật RLS (tests/db/schema.sql kiểm tra).
 

@@ -1,7 +1,7 @@
 import { createPublicSupabase } from "@/lib/supabase/public";
 import type { JobFilters, JobSummary } from "@/lib/filters";
 import type { SiteSettings } from "@/lib/site-defaults";
-import type { Catalog, InterviewEvent, Job } from "@/lib/types";
+import type { Catalog, InterviewEvent, InterviewWithJobSummary, Job } from "@/lib/types";
 
 type Opts = { now?: Date };
 type Page = { items: JobSummary[]; total: number; page: number; pageSize: 12; pageCount: number };
@@ -42,7 +42,7 @@ export function listUpcomingInterviews(
   o: { from?: string; to?: string; prefectures: string[]; occupations: string[] },
   opts: Opts = {},
 ) {
-  return rpc<Array<InterviewEvent & { job: Job }>>("upcoming_interviews", {
+  return rpc<InterviewWithJobSummary[]>("upcoming_interviews", {
     p: { from: o.from, to: o.to, prefectures: o.prefectures, occupations: o.occupations, ...(opts.now && { now: opts.now.toISOString() }) },
   });
 }
@@ -76,4 +76,17 @@ export async function getSiteSettings(): Promise<Partial<SiteSettings> | null> {
   const { data, error } = await createPublicSupabase().from("site_settings").select("data").eq("id", 1).maybeSingle();
   if (error) fail(error);
   return (data?.data as Partial<SiteSettings> | undefined) ?? null;
+}
+
+// Sitemap: chỉ cột cần, tin đang tuyển không phải demo; trang 1000 dòng (giới hạn max-rows mặc định của PostgREST).
+export async function listSitemapJobs(now = new Date()): Promise<{ code: string; slug: string; updatedAt: string }[]> {
+  const out: { code: string; slug: string; updatedAt: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await createPublicSupabase().from("jobs").select("code, slug, updated_at")
+      .eq("status", "published").eq("is_demo", false).or(`valid_through.is.null,valid_through.gt.${now.toISOString()}`)
+      .order("id").range(from, from + 999);
+    if (error) fail(error);
+    out.push(...data.map((r) => ({ code: r.code, slug: r.slug, updatedAt: r.updated_at })));
+    if (data.length < 1000) return out;
+  }
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { siteDefaults } from "@/lib/site-defaults";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { MAX_CV_BYTES, MIME, sniffFileKind, type ApplicationInput } from "@/lib/validate";
 
@@ -44,13 +45,19 @@ export async function startApplication(input: ApplicationInput, ip: string): Pro
     p: {
       idempotencyKey: input.idempotencyKey.trim(), ipHash: hash, kind: input.kind, jobCode: input.jobCode,
       fullName: input.fullName.trim(), email: input.email.trim(), phone: input.phone.trim(), facebook: input.facebook.trim(),
-      jpLevel: input.jpLevel, note: input.note.trim(), consentVersion: input.consentVersion.trim(),
+      // SQL lấy consentVersion từ site_settings; giá trị này chỉ là dự phòng khi chưa có cài đặt (không dùng giá trị client).
+      jpLevel: input.jpLevel, note: input.note.trim(), consentVersion: siteDefaults.consentVersion,
       cvExt: ext, cvMime: ext && MIME[ext],
     },
   });
   if (error || !data) return fail("start_application", error);
   if (data.error) return data.error === "rate_limited" || data.error === "job_closed" ? { error: data.error } : fail("start_application", { message: String(data.error) });
   if (data.status !== "pending_upload") return { id: data.id, refCode: data.refCode };
+  if (data.createdAt) {
+    // Gửi lại (chỉ nhánh này của SQL trả createdAt): chưa object nào được xác nhận → xóa các lần tải trước rồi mới cấp URL mới.
+    const r = await removeObjectsAt(data.id, data.createdAt);
+    if ("error" in r) return r;
+  }
 
   // Không upsert: mỗi lần gửi lại SQL cấp path mới, nên URL cũ không thể ghi đè object đã xác nhận.
   const { data: up, error: ue } = await sb.storage.from("cvs").createSignedUploadUrl(data.cvPath);

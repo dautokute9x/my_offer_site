@@ -39,6 +39,11 @@ export type InterviewEvent = {
   status: "scheduled" | "cancelled";
 };
 
+// Lịch phỏng vấn kèm phần tin mà trang lịch / trang chủ dùng (upcoming_interviews trả đúng các trường này).
+export type InterviewWithJobSummary = InterviewEvent & {
+  job: Pick<Job, "id" | "code" | "slug" | "status" | "isDemo" | "titleVi" | "titleJa" | "prefectureIds" | "occupationIds">;
+};
+
 export type ContentField =
   | "summary"
   | "description"

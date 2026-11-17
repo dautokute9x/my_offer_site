@@ -7,7 +7,7 @@ import { removeApplicationObjects, removeObjectsAt } from "@/lib/applications/se
 import { createServerSupabase } from "@/lib/supabase/server";
 import { jstTodayKey } from "@/lib/time";
 
-export type AppState = { error?: string; ok?: string; nonce?: number };
+export type AppState = { error?: string; ok?: string; nonce?: number; deleted?: number; failed?: number; more?: boolean };
 const err = (error: string): AppState => ({ error, nonce: Date.now() });
 const ok = (msg: string): AppState => ({ ok: msg, nonce: Date.now() });
 // id hồ sơ là uuid (schema 0001); chỉ nhận đúng dạng, không tin dữ liệu form.
@@ -78,14 +78,17 @@ export async function deleteApplication(_p: AppState, fd: FormData): Promise<App
 }
 
 const BATCH = 50;
+// Mỗi lần bấm xử lý tối đa 200 dòng hoặc ~20 giây để không vượt thời gian chạy của server action; còn thì bấm lại.
+const MAX_ROWS = 200, MAX_MS = 20_000;
 export async function purgeExpired(): Promise<AppState> {
   await requireAdmin("/admin/ho-so");
   const sb = await createServerSupabase();
   const today = jstTodayKey();
   const stale = new Date(Date.now() - 24 * 3600_000).toISOString();
   const cond = `delete_after.lt.${today},and(status.eq.pending_upload,created_at.lt.${stale})`;
-  let deleted = 0, failed = 0, last = "";
-  for (;;) {
+  const start = Date.now();
+  let deleted = 0, failed = 0, seen = 0, last = "", more = false;
+  outer: for (;;) {
     // Phân trang theo id (keyset) để hồ sơ lỗi không bị lấy lại vô hạn.
     let q = sb.from("applications").select("id")
       .or(cond).order("id").limit(BATCH);
@@ -93,10 +96,17 @@ export async function purgeExpired(): Promise<AppState> {
     const { data, error } = await q;
     if (error) { console.error("[admin/purge]", error.code); return err(`Dọn dở dang do lỗi truy vấn (đã xóa ${deleted}, lỗi ${failed}).`); }
     if (!data?.length) break;
-    for (const { id } of data) { const r = await purgeOne(sb, id, cond); if (r === "deleted") deleted++; else if (r === "failed") failed++; }
+    for (const { id } of data) {
+      if (seen >= MAX_ROWS || Date.now() - start > MAX_MS) { more = true; break outer; }
+      seen++;
+      const r = await purgeOne(sb, id, cond);
+      if (r === "deleted") deleted++; else if (r === "failed") failed++;
+    }
     last = data[data.length - 1].id;
     if (data.length < BATCH) break;
   }
   revalidatePath("/admin/ho-so", "layout");
-  return failed ? err(`Đã xóa ${deleted} hồ sơ, ${failed} hồ sơ lỗi (còn nguyên, thử lại sau).`) : ok(`Đã xóa ${deleted} hồ sơ quá hạn.`);
+  const tail = more ? " Còn hồ sơ cần dọn — bấm lại để tiếp tục." : "";
+  const res = failed ? err(`Đã xóa ${deleted} hồ sơ, ${failed} hồ sơ lỗi (còn nguyên, thử lại sau).${tail}`) : ok(`Đã xóa ${deleted} hồ sơ quá hạn.${tail}`);
+  return { ...res, deleted, failed, ...(more && { more }) };
 }
