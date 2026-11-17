@@ -1,3 +1,4 @@
+import { jobTitle } from "@/lib/i18n/catalog";
 import Image from "next/image";
 import Link from "next/link";
 import { countOpenJobsByGroup, getCatalog, getSiteSettings, listUpcomingInterviews, searchJobs } from "@/lib/data";
@@ -99,7 +100,7 @@ export default async function Home() {
                 <span className="display-face text-2xl leading-tight">#{j.code}</span>
                 <div className="min-w-0">
                   <h3 className="text-[length:var(--text-title)] leading-tight">
-                    <Link href={p(jobHref(j))} className="link decoration-transparent after:absolute after:inset-0 group-hover:decoration-accent-2">{j.titleVi}</Link>
+                    <Link href={p(jobHref(j))} className="link decoration-transparent after:absolute after:inset-0 group-hover:decoration-accent-2">{jobTitle(lang, j)}</Link>
                   </h3>
                   <p className="mt-1 text-sm text-muted">{place(j.prefectureIds)}</p>
                 </div>
@@ -183,7 +184,7 @@ export default async function Home() {
             {events.slice(0, 5).map((e) => (
               <li key={e.id} className="grid gap-x-6 gap-y-1 border-b-2 border-accent-2/30 py-4 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
                 <p className="font-bold text-accent-2">{formatJst(e.startsAt, t.dates)}</p>
-                <Link href={p(jobHref(e.job))} className="link font-medium text-ink">{e.job.titleVi}</Link>
+                <Link href={p(jobHref(e.job))} className="link font-medium text-ink">{jobTitle(lang, e.job)}</Link>
               </li>
             ))}
           </ul>

@@ -1,3 +1,4 @@
+import { jobTitle } from "@/lib/i18n/catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getCatalog, getSiteSettings, listUpcomingInterviews } from "@/lib/data";
@@ -97,7 +98,7 @@ export default async function InterviewSchedulePage({ searchParams }: Props) {
                         <p className="hidden text-xs text-muted group-data-[vn=true]:block">= {formatVn(e.startsAt, t.dates)}</p>
                       </div>
                       <div className="min-w-0">
-                        <p className="display-face text-[length:var(--text-title)] leading-tight"><Link href={p(jobHref(e.job))} className="link">{e.job.titleVi}</Link></p>
+                        <p className="display-face text-[length:var(--text-title)] leading-tight"><Link href={p(jobHref(e.job))} className="link">{jobTitle(lang, e.job)}</Link></p>
                         <p className="mt-1 text-sm text-muted">
                           {fmt(S.code, { v: e.job.code })}, {catalog.prefectures.filter((x) => e.job.prefectureIds.includes(x.id)).map((x) => prefectureName(lang, x)).join(", ") || t.common.unconfirmed}, {S.formats[e.format]}
                         </p>

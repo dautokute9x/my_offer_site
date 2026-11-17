@@ -1,3 +1,4 @@
+import { jobSubtitle, jobTitle } from "@/lib/i18n/catalog";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getCatalog, getJobByCode, getRelatedJobs, getSiteSettings, isDemoMode } from "@/lib/data";
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!job) return {};
   const [{ brandName }, { lang }] = await Promise.all([getSiteSettings(), getT()]);
   const url = localePath(lang, jobHref(job));
-  const title = `${job.titleVi} (${job.code}) | ${brandName}`;
+  const title = `${jobTitle(lang, job)} (${job.code}) | ${brandName}`;
   const desc = job.content.summary.vi ?? job.content.summary.ja ?? undefined;
   return {
     title: { absolute: title },
@@ -76,8 +77,8 @@ export default async function JobPage({ params, searchParams }: Props) {
             <span className="display-face text-2xl leading-none">#{job.code}</span>
             {job.isDemo && <span className="tag">{t.common.demoTag}</span>}
           </p>
-          <h1 className="mt-4 max-w-[24ch] text-[length:var(--text-display-s)]">{job.titleVi}</h1>
-          <p lang="ja" className="mt-3 text-muted">{job.titleJa}</p>
+          <h1 className="mt-4 max-w-[24ch] text-[length:var(--text-display-s)]">{jobTitle(lang, job)}</h1>
+          <p lang={jobSubtitle(lang, job).lang} className="mt-3 text-muted">{jobSubtitle(lang, job).text}</p>
           <p className="mt-2 text-ink">{places.map((p) => prefectureName(lang, p)).join(", ") || t.common.unconfirmed}{job.locationDetailJa && <>, <span lang="ja">{job.locationDetailJa}</span></>}</p>
         </div>
         {!closed && <div className="hidden lg:col-span-3 lg:flex lg:items-end lg:justify-end"><ApplyButton job={job} /></div>}

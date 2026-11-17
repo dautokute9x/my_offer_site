@@ -1,3 +1,4 @@
+import { jobSubtitle, jobTitle } from "@/lib/i18n/catalog";
 import Link from "next/link";
 import { salaryLines } from "@/lib/salary";
 import { formatJst } from "@/lib/time";
@@ -34,10 +35,10 @@ export default async function JobCard({ job, catalog }: { job: JobSummary; catal
       <div className="min-w-0">
         <h3 className="text-[length:var(--text-title)] leading-tight group-data-[view=poster]/grid:text-[length:var(--text-display-s)]">
           <Link href={localePath(lang, jobHref(job))} className="link decoration-transparent after:absolute after:inset-0 group-hover/row:decoration-accent-2">
-            {job.titleVi}
+            {jobTitle(lang, job)}
           </Link>
         </h3>
-        <p lang="ja" className="mt-1 text-sm text-muted">{job.titleJa}</p>
+        <p lang={jobSubtitle(lang, job).lang} className="mt-1 text-sm text-muted">{jobSubtitle(lang, job).text}</p>
         {job.content.summary.vi && (
           <p className="prose-body mt-3 line-clamp-3 hidden group-data-[view=poster]/grid:block">{job.content.summary.vi}</p>
         )}

@@ -119,3 +119,7 @@ html:lang(zh-Hans) {
   --font-display: var(--font-big-shoulders), "Big Shoulders", Impact, var(--font-noto-sc), var(--font-noto-jp), sans-serif;
   --font-body: var(--font-be-vietnam), "Be Vietnam Pro", var(--font-noto-sc), var(--font-noto-jp), system-ui, sans-serif;
 }
+
+/* Chữ Nhật/Trung rộng gấp đôi chữ Latin: nới giới hạn ch của tiêu đề; tiếng Nhật ngắt dòng theo cụm từ (trình duyệt hỗ trợ). */
+html:lang(ja) :is(h1, h2, h3), html:lang(zh-Hans) :is(h1, h2, h3) { max-width: 24ch; }
+html:lang(ja) :is(h1, h2, h3) { word-break: auto-phrase; }

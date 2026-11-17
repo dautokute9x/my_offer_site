@@ -12,3 +12,9 @@ export function catalogName(lang: Locale, t: Messages, kind: "groups" | "occupat
 
 /** Tên tỉnh: chữ Hán ở bản ja/zh, romaji ở các bản còn lại. */
 export const prefectureName = (lang: Locale, p: Named) => ((lang === "ja" || lang === "zh") && p.nameJa ? p.nameJa : p.nameVi);
+
+/** Tên tin: bản tiếng Nhật dùng tên gốc tiếng Nhật (nếu có); các bản khác dùng tên tiếng Việt. */
+export const jobTitle = (lang: Locale, j: { titleVi: string; titleJa?: string | null }) => (lang === "ja" && j.titleJa ? j.titleJa : j.titleVi);
+/** Dòng tên phụ dưới tiêu đề: ngược với jobTitle (tiếng Việt ở bản ja, tiếng Nhật ở bản khác). */
+export const jobSubtitle = (lang: Locale, j: { titleVi: string; titleJa?: string | null }) =>
+  lang === "ja" && j.titleJa ? { text: j.titleVi, lang: "vi" } : { text: j.titleJa ?? "", lang: "ja" };
