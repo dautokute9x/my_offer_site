@@ -19,7 +19,7 @@ Mẫu ở `.env.example` (sao chép thành `.env.local`).
 
 | Biến | Phạm vi | Ý nghĩa |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | công khai | Địa chỉ website (sitemap, canonical). Thiếu thì canonical trỏ về `http://localhost:3000`. |
+| `NEXT_PUBLIC_SITE_URL` | công khai | Địa chỉ website (sitemap, canonical). Thiếu thì canonical trỏ về `http://localhost:3000`; nếu đã đặt `NEXT_PUBLIC_SUPABASE_URL` thì build dừng với lỗi. |
 | `NEXT_PUBLIC_SUPABASE_URL` | công khai | URL dự án Supabase. **Để trống = chế độ demo.** |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | công khai | Khóa anon; bắt buộc khi đã đặt URL (thiếu thì `proxy.ts` báo lỗi). |
 | `SUPABASE_SERVICE_ROLE_KEY` | **chỉ server** | Khóa service role, dùng cho gửi hồ sơ/CV. Không thêm `NEXT_PUBLIC_`. |
@@ -57,13 +57,13 @@ Thông tin nhà tuyển dụng, tin và dữ liệu demo đều là hư cấu.
 
 ## Đã kiểm thử
 
-Chạy ngày 16/11/2026 trên nhánh `feature/website-v1`:
+Chạy ngày 17/11/2026 trên nhánh `feature/website-v1` (sau Giai đoạn 3):
 
-- `npm test`: 184 passed, 25 skipped (25 test so khớp cần Postgres, chạy trong `db:test`); 25 tệp pass, 1 tệp bỏ qua.
-- `npm run db:test`: 6 tệp SQL (`smoke`, `schema`, `rls`, `applications`, `admin_jobs`, `import`) chạy không lỗi (`ON_ERROR_STOP`), cộng 25/25 test so khớp demo/SQL (`parity`) — trên Postgres cục bộ, không phải Supabase thật.
-- `npm run lint`, `npx tsc --noEmit`: sạch.
-- `npm run build`: thành công.
-- `npx playwright test --trace off`: 35/35 pass (chế độ demo).
+- `npm test`: 214 passed, 25 skipped (25 test so khớp cần Postgres, chạy trong `db:test`).
+- `npm run db:test`: 6 tệp SQL chạy không lỗi + 25/25 test so khớp demo/SQL — trên Postgres cục bộ, không phải Supabase thật.
+- `npm run lint`, `npx tsc --noEmit`: sạch. `npm run build`: thành công.
+- `npx playwright test --trace off`: 37/37 pass (chế độ demo).
+- Kiểm tra trình duyệt: không tràn ngang ở 360/390/768/1024/1440 px trên 14 trang; axe (WCAG 2.1 A/AA) 0 lỗi; bàn phím, SEO, sitemap/robots — chi tiết ở `docs/superpowers/notes/2026-11-17-giai-doan-3-ket-qua.md`.
 
 Lời gọi Supabase JS được test bằng mock.
 
@@ -79,9 +79,8 @@ Chưa kiểm chứng được khi chưa có dự án Supabase thật (cần ch�
 
 Lưu ý vận hành (lỗi nhỏ đã biết, chưa sửa):
 
-- cập nhật/xóa bản ghi không tồn tại có thể báo thành công (0 dòng bị ảnh hưởng);
 - nhập CSV 2000 dòng mất ≈2 giây trên Postgres cục bộ (giới hạn statement của Supabase là 8 giây; chưa đo trên Supabase thật); CSV ghi đè toàn bộ trường của tin đã có (ô trống xóa nội dung; lịch phỏng vấn chỉ được thêm);
 - "Dọn hồ sơ quá hạn lưu" xử lý tối đa 200 hồ sơ (≈20 giây) mỗi lần bấm, còn tồn thì bấm lại; chưa có dọn tự động theo lịch; nếu xóa CV lỗi thì có thể còn tệp mồ côi trong Storage (ghi log);
-- ghi chú nội bộ hiển thị tác giả dạng "QTV <uuid>"; chưa có `Referrer-Policy`;
+- ghi chú nội bộ hiển thị tác giả dạng "QTV <uuid>";
 - tin chi tiết render động (không ISR), mỗi lượt xem gọi một RPC;
 - nhiều lỗi nhỏ về giao diện/accessibility của Giai đoạn 1 xem `docs/superpowers/notes/2026-11-16-giai-doan-1-ket-qua.md`.

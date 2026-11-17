@@ -15,6 +15,13 @@ html {
   line-height: 1.6;
 }
 
+/* thanh Ứng tuyển cố định ở đáy trên mobile không được che ô đang focus */
+@media (max-width: 1023.98px) {
+  html {
+    scroll-padding-bottom: 5rem;
+  }
+}
+
 body {
   background: var(--color-bg);
   color: #1a2233;

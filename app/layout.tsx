@@ -23,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
     title: { default: brandName, template: `%s | ${brandName}` },
     description: "Việc làm kỹ sư tại Nhật Bản dành cho người Việt.",
+    openGraph: { siteName: brandName, type: "website", locale: "vi_VN" },
   };
 }
 

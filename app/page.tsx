@@ -5,6 +5,8 @@ import { jobHref, parseFilters } from "@/lib/filters";
 import { formatJst } from "@/lib/time";
 import { isPlaceholder } from "@/lib/site-defaults";
 
+export const metadata = { alternates: { canonical: "/" } };
+
 export const dynamic = "force-dynamic"; // lịch phỏng vấn phụ thuộc thời điểm hiện tại
 
 const STEPS = ["Tìm việc", "Gửi hồ sơ", "Tư vấn", "Phỏng vấn"];

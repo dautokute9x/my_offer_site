@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+export const metadata = { title: "Không tìm thấy trang" };
+
 export default function NotFound() {
   return (
     <section>
