@@ -37,8 +37,8 @@ export function CsvImport() {
         <input type="file" accept=".csv,text/csv" onChange={(e) => onFile(e.target.files?.[0])} className="mt-1 block min-h-11 w-full rounded border px-3 py-2 font-normal" />
       </label>
       <div role="status" aria-live="polite" className="text-sm">{pending && "Đang xử lý…"}</div>
-      {msg && <p role="alert" className="text-sm text-red-700">{msg}</p>}
-      {preview?.fatal && <p role="alert" className="text-sm text-red-700">{preview.fatal}</p>}
+      {msg && <p role="alert" className="text-sm text-error">{msg}</p>}
+      {preview?.fatal && <p role="alert" className="text-sm text-error">{preview.fatal}</p>}
       {preview && !preview.fatal && (
         <>
           <section aria-labelledby="h-map" className="space-y-2">
@@ -56,7 +56,7 @@ export function CsvImport() {
           </section>
           <section aria-labelledby="h-prev" className="space-y-2">
             <h2 id="h-prev" className="text-xl font-bold">Xem trước</h2>
-            {preview.errors.map((e, i) => <p key={i} role="alert" className="text-sm text-red-700">{e.message}</p>)}
+            {preview.errors.map((e, i) => <p key={i} role="alert" className="text-sm text-error">{e.message}</p>)}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <caption className="sr-only">Xem trước các dòng sẽ nhập</caption>
@@ -65,29 +65,29 @@ export function CsvImport() {
                   {preview.lines.map((l) => (
                     <tr key={l.line} className="border-t align-top">
                       <td className="p-2">{l.line}</td>
-                      <td className="p-2">{l.action === "create" ? "Tạo" : <strong className="text-red-700">Ghi đè</strong>}</td>
+                      <td className="p-2">{l.action === "create" ? "Tạo" : <strong className="text-error">Ghi đè</strong>}</td>
                       <td className="p-2">{l.code}</td>
                       <td className="p-2">{l.title}</td>
                       <td className="p-2">
-                        {l.errors.map((m, i) => <p key={i} className="text-red-700">Lỗi — {m}</p>)}
-                        {l.warnings.map((m, i) => <p key={i} className="text-amber-800">Cảnh báo — {m}</p>)}
+                        {l.errors.map((m, i) => <p key={i} className="text-error">Lỗi — {m}</p>)}
+                        {l.warnings.map((m, i) => <p key={i} className="text-ink">Cảnh báo — {m}</p>)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {updates > 0 && <p role="alert" className="rounded border-2 border-red-600 bg-red-50 p-3 text-sm font-bold text-red-800">{updates} tin đã tồn tại sẽ bị GHI ĐÈ toàn bộ nội dung; ô để trống sẽ xóa nội dung hiện có (riêng lịch phỏng vấn chỉ được thêm, không bị xóa).</p>}
-            <button type="button" onClick={doImport} disabled={!canImport} className="min-h-11 rounded bg-navy px-4 font-semibold text-white disabled:opacity-60">
+            {updates > 0 && <p role="alert" className="rounded border-2 border-error bg-paper-2 p-3 text-sm font-bold text-error">{updates} tin đã tồn tại sẽ bị GHI ĐÈ toàn bộ nội dung; ô để trống sẽ xóa nội dung hiện có (riêng lịch phỏng vấn chỉ được thêm, không bị xóa).</p>}
+            <button type="button" onClick={doImport} disabled={!canImport} className="min-h-11 rounded bg-ink px-4 font-semibold text-paper disabled:opacity-60">
               Nhập {preview.valid} tin
             </button>
-            {errCount > 0 && <p className="text-sm text-red-700">Còn {errCount} lỗi — sửa tệp rồi chọn lại.</p>}
+            {errCount > 0 && <p className="text-sm text-error">Còn {errCount} lỗi — sửa tệp rồi chọn lại.</p>}
           </section>
         </>
       )}
       {result && (result.ok
-        ? <p role="status" className="text-sm text-green-800">Đã nhập xong: tạo {result.created} tin, cập nhật {result.updated} tin.</p>
-        : <p role="alert" className="text-sm text-red-700">{result.message}</p>)}
+        ? <p role="status" className="text-sm text-success">Đã nhập xong: tạo {result.created} tin, cập nhật {result.updated} tin.</p>
+        : <p role="alert" className="text-sm text-error">{result.message}</p>)}
     </div>
   );
 }

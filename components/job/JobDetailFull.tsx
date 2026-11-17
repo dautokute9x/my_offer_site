@@ -5,9 +5,9 @@ import Interviews from "./Interviews";
 import TriValue from "./TriValue";
 
 const Section = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (
-  <section aria-labelledby={id} className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
-    <h2 id={id} className="text-lg font-bold text-navy">{title}</h2>
-    {children}
+  <section aria-labelledby={id} className="grid gap-4 border-t border-rule-2 pt-6 lg:grid-cols-12 lg:gap-8">
+    <h2 id={id} className="text-[length:var(--text-title)] lg:col-span-4">{title}</h2>
+    <div className="prose-body max-w-none space-y-4 lg:col-span-8">{children}</div>
   </section>
 );
 
@@ -16,23 +16,25 @@ export default function JobDetailFull({ job, catalog, interviews }: { job: Job; 
   const block = (f: ContentField) => <BilingualBlock text={job.content[f]} status={job.translationStatus} />;
   const skills = catalog.skills.filter((s) => job.skillIds.includes(s.id)).map((s) => s.name);
   const level = job.jpLevel == null ? UNCONFIRMED : job.jpLevel === "none" ? "Không yêu cầu" : job.jpLevel;
-  const exp = job.experienceYearsMin == null ? UNCONFIRMED : `≥${job.experienceYearsMin} năm`;
+  const exp = job.experienceYearsMin == null ? UNCONFIRMED : `Từ ${job.experienceYearsMin} năm`;
   const has = (f: ContentField) => !!(job.content[f].ja || job.content[f].vi);
   const sub = (label: string, f: ContentField) =>
-    has(f) && (<div><h3 className="font-semibold">{label}</h3>{block(f)}</div>);
+    has(f) && (<div><h3 className="text-lg">{label}</h3><div className="mt-1">{block(f)}</div></div>);
   return (
-    <div className="space-y-4">
+    <div className="space-y-10">
       <Section id="luong" title="Lương & thu nhập">
-        <p>Tháng: {monthly ?? UNCONFIRMED}</p>
-        <p>Năm: {annual ?? UNCONFIRMED}</p>
-        <p>Thương lượng: <TriValue value={job.salaryNegotiable} /></p>
+        <dl className="grid gap-x-8 gap-y-4 font-[family-name:var(--font-display)] sm:grid-cols-3">
+          <div><dt className="text-sm text-muted">Tháng<span className="sr-only">:</span></dt>{" "}<dd className="display-face mt-1 text-[length:var(--text-title)]">{monthly ?? UNCONFIRMED}</dd></div>
+          <div><dt className="text-sm text-muted">Năm<span className="sr-only">:</span></dt>{" "}<dd className="display-face mt-1 text-[length:var(--text-title)]">{annual ?? UNCONFIRMED}</dd></div>
+          <div><dt className="text-sm text-muted">Thương lượng<span className="sr-only">:</span></dt>{" "}<dd className="mt-1"><TriValue value={job.salaryNegotiable} /></dd></div>
+        </dl>
       </Section>
       <Section id="yeu-cau" title="Yêu cầu">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-          <dt className="font-semibold">Tiếng Nhật</dt><dd>{level}{job.jpNote && <> · <span lang="ja">{job.jpNote}</span></>}</dd>
-          <dt className="font-semibold">Kinh nghiệm</dt><dd>{exp}{job.experienceNote && <> · <span lang="ja">{job.experienceNote}</span></>}</dd>
-          <dt className="font-semibold">Kỹ năng</dt><dd>{skills.join(", ") || UNCONFIRMED}</dd>
-          <dt className="font-semibold">Bằng lái</dt><dd><TriValue value={job.driverLicenseRequired} yes="Bắt buộc" no="Không bắt buộc" /></dd>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 font-[family-name:var(--font-display)] text-base">
+          <dt className="text-muted">Tiếng Nhật</dt><dd>{level}{job.jpNote && <>, <span lang="ja">{job.jpNote}</span></>}</dd>
+          <dt className="text-muted">Kinh nghiệm</dt><dd>{exp}{job.experienceNote && <>, <span lang="ja">{job.experienceNote}</span></>}</dd>
+          <dt className="text-muted">Kỹ năng</dt><dd>{skills.join(", ") || UNCONFIRMED}</dd>
+          <dt className="text-muted">Bằng lái</dt><dd><TriValue value={job.driverLicenseRequired} yes="Bắt buộc" no="Không bắt buộc" /></dd>
         </dl>
         {block("requirements")}
       </Section>
@@ -42,13 +44,13 @@ export default function JobDetailFull({ job, catalog, interviews }: { job: Job; 
         {!has("workingHours") && !has("holidays") && !has("overtime") && <p>{UNCONFIRMED}</p>}
       </Section>
       <Section id="quyen-loi" title="Quyền lợi">
-        <ul className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+        <ul className="grid gap-x-8 font-[family-name:var(--font-display)] text-base sm:grid-cols-2">
           {catalog.benefits.map((b) => (
-            <li key={b.slug} className="flex justify-between gap-2 border-b border-slate-100 py-1">
+            <li key={b.slug} className="flex min-h-11 items-center justify-between gap-2 border-b border-rule py-2">
               <span>{b.nameVi}</span><TriValue value={job.benefits[b.slug] ?? null} />
             </li>
           ))}
-          <li className="flex justify-between gap-2 border-b border-slate-100 py-1">
+          <li className="flex min-h-11 items-center justify-between gap-2 border-b border-rule py-2">
             <span>Xe công ty</span><TriValue value={job.companyCarProvided} />
           </li>
         </ul>

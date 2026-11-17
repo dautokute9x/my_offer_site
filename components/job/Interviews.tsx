@@ -8,12 +8,12 @@ export default function Interviews({ events }: { events: InterviewEvent[] }) {
   if (!events.length) return <p>Chưa có lịch phỏng vấn sắp tới.</p>;
   return (
     <TimezoneToggle>
-      <ul className="space-y-2">
+      <ul className="border-t border-rule font-[family-name:var(--font-display)] text-base">
         {events.map((e) => (
-          <li key={e.id} className="rounded border border-warn/40 bg-orange-50 p-3">
-            <p className="font-semibold text-warn"><span aria-hidden="true">🗓</span> {formatJst(e.startsAt)}</p>
+          <li key={e.id} className="border-b border-rule py-3">
+            <p className="font-semibold text-accent">{formatJst(e.startsAt)}</p>
             <p className="hidden text-sm group-data-[vn=true]:block">= {formatVn(e.startsAt)}</p>
-            <p className="text-sm">{FORMAT[e.format]}{e.publicNote && ` · ${e.publicNote}`}</p>
+            <p className="text-sm text-muted">{FORMAT[e.format]}{e.publicNote && `, ${e.publicNote}`}</p>
           </li>
         ))}
       </ul>

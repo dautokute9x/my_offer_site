@@ -28,47 +28,47 @@ export default async function JobsPage({ searchParams }: Props) {
   const sorts = [["moi", "Mới cập nhật"], ["pv", "Lịch phỏng vấn gần nhất"], ["luong", "Lương cao nhất"]];
   return (
     // Thứ tự DOM: tìm kiếm trước bộ lọc (bàn phím); lưới CSS giữ sidebar bên trái ở lg.
-    <JobsNav className="grid gap-4 lg:grid-cols-[18rem_1fr] lg:gap-x-6">
-      <section className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
-        <h1 className="text-2xl font-bold text-navy">Việc làm kỹ sư tại Nhật</h1>
-        <form action="/viec-lam" method="get" className="flex flex-wrap items-end gap-2">
+    <JobsNav className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-x-12">
+      <section className="min-w-0 space-y-6 lg:col-start-2 lg:row-start-1">
+        <h1 className="text-[length:var(--text-display-s)]">Việc làm kỹ sư tại Nhật</h1>
+        <form action="/viec-lam" method="get" className="flex flex-wrap items-end gap-3">
           {/* Giữ các bộ lọc khác; đổi từ khóa hoặc sắp xếp thì về trang 1. */}
           {[...new URLSearchParams(filtersToQuery({ ...f, q: "", sort: "moi", page: 1 }))].map(([k, v]) => (
             <input key={k} type="hidden" name={k} value={v} />
           ))}
-          <label className="min-w-0 flex-1 basis-56 text-sm font-semibold text-navy">Tìm kiếm
-            <input name="q" type="search" defaultValue={f.q} placeholder="Mã tin, chức danh, kỹ năng…"
-              className="mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-3 font-normal" />
+          <label className="min-w-0 flex-1 basis-56 text-sm text-ink">Tìm kiếm
+            <input name="q" type="search" defaultValue={f.q} placeholder="Mã tin, chức danh, kỹ năng…" className="field mt-1" />
           </label>
-          <label className="text-sm font-semibold text-navy">Sắp xếp
-            <SortSelect defaultValue={f.sort} className="mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-2 font-normal">
+          <label className="text-sm text-ink">Sắp xếp
+            <SortSelect defaultValue={f.sort} className="field mt-1">
               {sorts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </SortSelect>
           </label>
-          <button className="min-h-11 rounded bg-brand px-5 font-semibold text-white">Tìm</button>
+          <button className="btn btn-primary">Tìm</button>
         </form>
       </section>
       <aside className="lg:sticky lg:top-4 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
         <FilterPanel catalog={catalog} filters={f} total={total} />
       </aside>
-      <JobsResults className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-2">
+      <JobsResults className="min-w-0 space-y-6 lg:col-start-2 lg:row-start-2">
         <ActiveChips filters={f} catalog={catalog} />
-        <ViewToggle summary={<p role="status" className="font-semibold">Tìm thấy {total} việc làm</p>}>
+        <ViewToggle summary={<p role="status" className="display-face text-2xl">Tìm thấy {total} việc làm</p>}>
           {items.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-6 text-center">
-              <p className="font-semibold text-navy">Không tìm thấy việc làm phù hợp</p>
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <div className="opens py-10">
+              <p className="display-face text-[length:var(--text-title)]">Không tìm thấy việc làm phù hợp</p>
+              <p className="prose-body mt-2">Thử bỏ bớt bộ lọc hoặc tìm bằng mã tin.</p>
+              <div className="mt-6 flex flex-wrap gap-3">
                 {f.page > 1 && total > 0 && (
                   <a href={`/viec-lam${filtersToQuery({ ...f, page: 1 }) ? "?" + filtersToQuery({ ...f, page: 1 }) : ""}`}
-                    className="inline-flex min-h-11 items-center rounded bg-brand px-5 font-semibold text-white">Về trang 1</a>
+                    className="btn btn-primary">Về trang 1</a>
                 )}
                 {hasActiveFilters(f) && (
-                  <Link href="/viec-lam" className="inline-flex min-h-11 items-center rounded border border-brand px-5 font-semibold text-brand">Xóa bộ lọc</Link>
+                  <Link href="/viec-lam" className="btn">Xóa bộ lọc</Link>
                 )}
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 group-data-[view=poster]/grid:lg:grid-cols-3">
+            <div className="grid grid-cols-1 border-t-4 border-ink border-b border-b-rule group-data-[view=poster]/grid:gap-x-8 group-data-[view=poster]/grid:gap-y-14 group-data-[view=poster]/grid:border-0 group-data-[view=poster]/grid:md:grid-cols-2 group-data-[view=poster]/grid:xl:grid-cols-3">
               {items.map((j) => <JobCard key={j.id} job={j} catalog={catalog} />)}
             </div>
           )}

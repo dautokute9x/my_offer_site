@@ -1,7 +1,7 @@
 import Link from "next/link";
-import JobCard from "@/components/JobCard";
 import { countOpenJobsByGroup, getCatalog, getSiteSettings, listUpcomingInterviews, searchJobs } from "@/lib/data";
 import { jobHref, parseFilters } from "@/lib/filters";
+import { salaryLines, UNCONFIRMED } from "@/lib/salary";
 import { formatJst } from "@/lib/time";
 import { isPlaceholder } from "@/lib/site-defaults";
 
@@ -9,7 +9,12 @@ export const metadata = { alternates: { canonical: "/" } };
 
 export const dynamic = "force-dynamic"; // lịch phỏng vấn phụ thuộc thời điểm hiện tại
 
-const STEPS = ["Tìm việc", "Gửi hồ sơ", "Tư vấn", "Phỏng vấn"];
+const STEPS: [string, string][] = [
+  ["Tìm việc", "Lọc theo tỉnh, nghề, lương và trình độ tiếng Nhật."],
+  ["Gửi hồ sơ", "Điền thông tin và đính kèm CV ngay trong tin."],
+  ["Tư vấn", "Bên tư vấn liên hệ để trao đổi thêm."],
+  ["Phỏng vấn", "Lịch ghi theo giờ Nhật, có thể xem giờ Việt Nam."],
+];
 const FAQ: [string, string][] = [
   ["Tôi cần chuẩn bị gì để gửi hồ sơ?", "Thông thường cần thông tin liên hệ và kinh nghiệm làm việc. Yêu cầu cụ thể tùy từng tin; vui lòng xem chi tiết tin hoặc liên hệ để được giải thích."],
   ["Có mất phí không?", "Vui lòng liên hệ để được giải thích cụ thể về chi phí."],
@@ -17,7 +22,7 @@ const FAQ: [string, string][] = [
   ["Phỏng vấn diễn ra như thế nào?", "Hình thức (online hoặc trực tiếp) và thời gian được ghi trong từng tin khi đã xác nhận. Vui lòng liên hệ để được giải thích cụ thể."],
   ["Tôi chưa giỏi tiếng Nhật có ứng tuyển được không?", "Yêu cầu tiếng Nhật khác nhau theo từng tin. Bạn có thể lọc theo trình độ tiếng Nhật ở trang việc làm hoặc liên hệ để được tư vấn."],
 ];
-const h2 = "mb-3 text-xl font-bold text-navy";
+const head = "grid gap-6 lg:grid-cols-12 lg:gap-8";
 
 export default async function Home() {
   const catalog = await getCatalog();
@@ -27,86 +32,123 @@ export default async function Home() {
     countOpenJobsByGroup(),
     getSiteSettings(),
   ]);
+  const place = (ids: number[]) => catalog.prefectures.filter((p) => ids.includes(p.id)).map((p) => p.nameVi).join(", ") || UNCONFIRMED;
   return (
-    <div className="space-y-10">
-      <section className="rounded-lg bg-navy p-6 text-white sm:p-10">
-        <h1 className="text-3xl font-bold">Tìm việc và chuyển việc kỹ sư tại Nhật cho người Việt</h1>
-        <form action="/viec-lam" method="get" className="mt-5 flex flex-wrap items-end gap-2">
-          <label className="min-w-0 flex-1 basis-56 text-sm font-semibold">Từ khóa
-            <input name="q" type="search" placeholder="Mã tin, chức danh, kỹ năng…" className="mt-1 min-h-11 w-full rounded bg-white px-3 font-normal text-slate-900 focus-visible:outline-white" />
-          </label>
-          <label className="min-w-0 flex-1 basis-56 text-sm font-semibold">Nhóm nghề
-            <select name="nhom" defaultValue="" className="mt-1 min-h-11 w-full rounded bg-white px-2 font-normal text-slate-900 focus-visible:outline-white">
-              <option value="">Tất cả nhóm nghề</option>
-              {catalog.groups.map((g) => <option key={g.slug} value={g.slug}>{g.nameVi}</option>)}
-            </select>
-          </label>
-          <button className="min-h-11 rounded bg-brand px-6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Tìm việc</button>
-        </form>
+    <div className="space-y-[var(--section-gap-s)]">
+      {/* Hero kiểu Index: chính danh sách tin là hình ảnh của trang. */}
+      <section aria-labelledby="hero" className="grid gap-12 lg:min-h-[calc(100dvh-12rem)] lg:grid-cols-12 lg:items-center lg:gap-8">
+        <div className="lg:col-span-5">
+          <h1 id="hero" className="text-[length:var(--text-display)]">Việc làm kỹ sư tại Nhật Bản</h1>
+          <p className="standfirst mt-6">Tin tuyển dụng cho kỹ sư người Việt, kèm lương, yêu cầu tiếng Nhật và lịch phỏng vấn theo giờ Nhật.</p>
+          <form action="/viec-lam" method="get" className="mt-8 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <label className="text-sm text-ink sm:col-span-2">Từ khóa
+              <input name="q" type="search" placeholder="Mã tin, chức danh, kỹ năng…" className="field mt-1" />
+            </label>
+            <label className="text-sm text-ink">Nhóm nghề
+              <select name="nhom" defaultValue="" className="field mt-1">
+                <option value="">Tất cả nhóm nghề</option>
+                {catalog.groups.map((g) => <option key={g.slug} value={g.slug}>{g.nameVi}</option>)}
+              </select>
+            </label>
+            <button className="btn btn-primary self-end">Tìm việc</button>
+          </form>
+        </div>
+        <div className="lg:col-span-6 lg:col-start-7">
+          <div className="flex items-baseline justify-between gap-4 border-t-4 border-ink pt-3">
+            <h2 id="moi" className="text-[length:var(--text-title)]">Việc làm mới nhất</h2>
+            <Link href="/viec-lam" className="link text-sm">Xem tất cả việc làm</Link>
+          </div>
+          <ol className="mt-2">
+            {items.slice(0, 6).map((j) => {
+              const { monthly, annual } = salaryLines(j);
+              return (
+                <li key={j.id} className="group relative grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 border-b border-rule py-4 transition-colors duration-200 hover:bg-paper-2">
+                  <span className="display-face text-xl leading-tight">#{j.code}</span>
+                  <div className="min-w-0">
+                    <h3 className="text-[length:var(--text-title)] leading-tight">
+                      <Link href={jobHref(j)} className="link decoration-transparent after:absolute after:inset-0 group-hover:decoration-accent">{j.titleVi}</Link>
+                    </h3>
+                    <p className="mt-1 text-sm text-muted">{place(j.prefectureIds)}</p>
+                    <p className="text-sm text-ink tabular-nums">{monthly || annual || `Lương ${UNCONFIRMED.toLowerCase()}`}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </section>
 
-      <section aria-labelledby="nhom">
-        <h2 id="nhom" className={h2}>Nhóm nghề</h2>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section aria-labelledby="nhom" className={head}>
+        <div className="opens lg:col-span-4">
+          <h2 id="nhom">Nhóm nghề</h2>
+        </div>
+        <ul className="border-t-4 border-ink lg:col-span-8">
           {catalog.groups.map((g) => (
             <li key={g.slug}>
-              <Link href={`/viec-lam?nhom=${g.slug}`} className="block h-full rounded-lg border border-slate-200 bg-white p-4 hover:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#176AC0]">
-                <span className="block font-bold text-navy">{g.nameVi}</span>
-                <span lang="ja" className="block text-sm text-slate-600">{g.nameJa}</span>
-                <span className="mt-2 block text-sm font-semibold text-brand">{counts[g.slug] ?? 0} việc làm</span>
+              <Link href={`/viec-lam?nhom=${g.slug}`} className="group grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 border-b border-rule py-4 no-underline transition-colors duration-200 hover:bg-paper-2">
+                <span>
+                  <span className="display-face block text-[length:var(--text-title)] leading-tight underline decoration-transparent underline-offset-4 transition-colors duration-200 group-hover:decoration-accent">{g.nameVi}</span>
+                  <span lang="ja" className="mt-1 block text-sm text-muted">{g.nameJa}</span>
+                </span>
+                <span className="display-face text-[length:var(--text-title)] tabular-nums">{counts[g.slug] ?? 0} việc làm</span>
               </Link>
             </li>
           ))}
         </ul>
       </section>
 
-      <section aria-labelledby="moi">
-        <h2 id="moi" className={h2}>Việc làm mới nhất</h2>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {items.slice(0, 6).map((j) => <JobCard key={j.id} job={j} catalog={catalog} />)}
+      <section aria-labelledby="pv" className={head}>
+        <div className="opens lg:col-span-4">
+          <h2 id="pv">Lịch phỏng vấn sắp tới</h2>
+          <Link href="/lich-phong-van" className="link mt-4 inline-flex min-h-11 items-center">Xem toàn bộ lịch</Link>
         </div>
-        <Link href="/viec-lam" className="mt-4 inline-flex min-h-11 items-center font-semibold text-brand underline">Xem tất cả việc làm</Link>
-      </section>
-
-      <section aria-labelledby="pv">
-        <h2 id="pv" className={h2}>Lịch phỏng vấn sắp tới</h2>
-        {events.length === 0 ? <p>Chưa có lịch phỏng vấn.</p> : (
-          <ul className="space-y-2">
+        {events.length === 0 ? <p className="prose-body lg:col-span-8 lg:border-t-4 lg:border-ink lg:pt-4">Chưa có lịch phỏng vấn.</p> : (
+          <ul className="border-t-4 border-ink lg:col-span-8">
             {events.slice(0, 5).map((e) => (
-              <li key={e.id} className="rounded border border-warn/40 bg-orange-50 p-3">
-                <p className="font-semibold text-warn">{formatJst(e.startsAt)}</p>
-                <Link href={jobHref(e.job)} className="font-semibold text-brand underline">{e.job.titleVi}</Link>
+              <li key={e.id} className="grid gap-x-6 gap-y-1 border-b border-rule py-4 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+                <p className="font-semibold text-accent">{formatJst(e.startsAt)}</p>
+                <Link href={jobHref(e.job)} className="link font-semibold text-ink">{e.job.titleVi}</Link>
               </li>
             ))}
           </ul>
         )}
-        <Link href="/lich-phong-van" className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline">Xem toàn bộ lịch</Link>
       </section>
 
       <section aria-labelledby="qt">
-        <h2 id="qt" className={h2}>Quy trình</h2>
-        <ol className="grid gap-3 sm:grid-cols-4">
-          {STEPS.map((t, i) => (
-            <li key={t} className="rounded-lg border border-slate-200 bg-white p-4 font-semibold text-navy">
-              <span className="mr-2 inline-flex size-7 items-center justify-center rounded-full bg-brand text-white">{i + 1}</span>{t}
+        <h2 id="qt" className="opens">Quy trình</h2>
+        <ol className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          {STEPS.map(([t, d], i) => (
+            <li key={t} className="border-t border-rule-2 pt-4">
+              <span className="display-face block text-[length:var(--text-display-s)] leading-none tabular-nums">{i + 1}</span>
+              <span className="display-face mt-6 block text-[length:var(--text-title)] leading-tight">{t}</span>
+              <span className="prose-body mt-2 block">{d}</span>
             </li>
           ))}
         </ol>
       </section>
 
-      <section aria-labelledby="gt" className="max-w-3xl">
-        <h2 id="gt" className={h2}>Giới thiệu</h2>
-        <p>{isPlaceholder(s.aboutText) ? `${s.brandName} giúp kỹ sư người Việt tìm hiểu tin tuyển dụng tại Nhật Bản và được tư vấn trước khi ứng tuyển.` : s.aboutText.split(/\n\s*\n/)[0]}</p>
-        <Link href="/gioi-thieu" className="mt-2 inline-flex min-h-11 items-center font-semibold text-brand underline">Tìm hiểu thêm</Link>
+      <section aria-labelledby="gt" className={head}>
+        <div className="opens lg:col-span-4">
+          <h2 id="gt">Giới thiệu</h2>
+        </div>
+        <div className="lg:col-span-8 lg:border-t-4 lg:border-ink lg:pt-4">
+          <p className="standfirst max-w-[34ch] text-[length:var(--text-display-s)] leading-[1.15]">{isPlaceholder(s.aboutText) ? `${s.brandName} giúp kỹ sư người Việt tìm hiểu tin tuyển dụng tại Nhật Bản và được tư vấn trước khi ứng tuyển.` : s.aboutText.split(/\n\s*\n/)[0]}</p>
+          <Link href="/gioi-thieu" className="btn mt-8">Tìm hiểu thêm</Link>
+        </div>
       </section>
 
-      <section aria-labelledby="faq" className="max-w-3xl">
-        <h2 id="faq" className={h2}>Câu hỏi thường gặp</h2>
-        <div className="space-y-2">
+      <section aria-labelledby="faq" className={head}>
+        <div className="opens lg:col-span-4">
+          <h2 id="faq">Câu hỏi thường gặp</h2>
+        </div>
+        <div className="border-t-4 border-ink lg:col-span-8">
           {FAQ.map(([q, a]) => (
-            <details key={q} className="rounded border border-slate-300 bg-white">
-              <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold text-navy">{q}</summary>
-              <p className="px-3 pb-3">{a}</p>
+            <details key={q} className="group border-b border-rule">
+              <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-4 display-face text-[length:var(--text-title)] leading-tight">
+                {q}
+                <span aria-hidden="true" className="text-muted transition-transform duration-200 group-open:rotate-45">+</span>
+              </summary>
+              <p className="prose-body pb-6">{a}</p>
             </details>
           ))}
         </div>

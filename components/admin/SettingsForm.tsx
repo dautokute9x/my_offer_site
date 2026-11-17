@@ -10,7 +10,7 @@ export function SettingsForm({ initial }: { initial: SiteSettings }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettings, {});
   const e = state.errors ?? {};
   const v = (k: keyof SiteSettings) => state.values?.[k] ?? String(initial[k]);
-  const err = (k: string) => e[k] && <p id={`${uid}-${k}`} role="alert" className="text-sm text-red-700">{e[k]}</p>;
+  const err = (k: string) => e[k] && <p id={`${uid}-${k}`} role="alert" className="text-sm text-error">{e[k]}</p>;
   const aria = (k: string) => (e[k] ? { "aria-invalid": true as const, "aria-describedby": `${uid}-${k}` } : {});
   const field = (k: keyof SiteSettings, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <div>
@@ -44,8 +44,8 @@ export function SettingsForm({ initial }: { initial: SiteSettings }) {
         <input type="checkbox" name="policiesConfirmed" defaultChecked={state.values ? state.values.policiesConfirmed === "on" : initial.policiesConfirmed} />
         Đã xác nhận các chính sách (quyền riêng tư, điều khoản)
       </label>
-      <button type="submit" disabled={pending} className="min-h-11 rounded bg-navy px-4 font-semibold text-white disabled:opacity-60">Lưu</button>
-      {state.ok && <span role="status" className="ml-3 text-sm text-green-800">Đã lưu.</span>}
+      <button type="submit" disabled={pending} className="min-h-11 rounded bg-ink px-4 font-semibold text-paper disabled:opacity-60">Lưu</button>
+      {state.ok && <span role="status" className="ml-3 text-sm text-success">Đã lưu.</span>}
     </form>
   );
 }
@@ -53,13 +53,13 @@ export function SettingsForm({ initial }: { initial: SiteSettings }) {
 export function WipeDemo({ count }: { count: number }) {
   const [state, action, pending] = useActionState<WipeState, FormData>(wipeDemoJobs, {});
   return (
-    <form action={action} className="space-y-3 rounded border border-red-300 p-4">
+    <form action={action} className="space-y-3 rounded border border-error p-4">
       <p className="text-sm">Hiện có <strong>{count}</strong> tin demo. Xóa vĩnh viễn cùng lịch phỏng vấn của các tin đó; hồ sơ ứng tuyển được giữ lại.</p>
       <label className="block text-sm font-semibold">Gõ XOA để xác nhận
         <input name="confirm" autoComplete="off" aria-describedby="wipe-msg" className={`${input} max-w-xs`} />
       </label>
-      <button type="submit" disabled={pending} className="min-h-11 rounded border border-red-700 px-4 font-semibold text-red-700 disabled:opacity-60">Xóa toàn bộ tin demo</button>
-      <p id="wipe-msg" role={state.error ? "alert" : "status"} className={state.error ? "text-sm text-red-700" : "text-sm text-green-800"}>
+      <button type="submit" disabled={pending} className="min-h-11 rounded border border-error px-4 font-semibold text-error disabled:opacity-60">Xóa toàn bộ tin demo</button>
+      <p id="wipe-msg" role={state.error ? "alert" : "status"} className={state.error ? "text-sm text-error" : "text-sm text-success"}>
         {state.error ?? (state.deleted != null ? `Đã xóa ${state.deleted} tin demo.` : "")}
       </p>
     </form>

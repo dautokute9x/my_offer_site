@@ -19,7 +19,7 @@ export default async function CatalogAdmin() {
   const bad = [groups, occ, skills, benefits, prefs].find((r) => r.error);
   if (bad?.error) {
     console.error("[admin/danh-muc]", bad.error.code);
-    return <p role="alert" className="text-red-700">Không tải được danh mục.</p>;
+    return <p role="alert" className="text-error">Không tải được danh mục.</p>;
   }
   const g = (groups.data ?? []) as CatalogItem[];
   const gOpts = g.map((x) => ({ id: Number(x.id), name_vi: String(x.name_vi) }));

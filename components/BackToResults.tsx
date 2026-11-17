@@ -12,7 +12,7 @@ export default function BackToResults() {
     } catch {} // không có referrer: để link /viec-lam chạy bình thường
   };
   return (
-    <Link href="/viec-lam" onClick={onClick} className="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#176AC0]">
+    <Link href="/viec-lam" onClick={onClick} className="link inline-flex min-h-11 items-center text-sm font-semibold text-ink">
       ← Quay lại kết quả
     </Link>
   );

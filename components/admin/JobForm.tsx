@@ -18,7 +18,7 @@ export default function JobForm({ catalog, initial, id, sourceChanged }: { catal
   const e = state.errors ?? {};
   const s = (k: string) => { const x = v[k]; return Array.isArray(x) ? x[0] ?? "" : x ?? ""; };
   const list = (k: string) => (Array.isArray(v[k]) ? v[k] : v[k] ? [v[k] as string] : []);
-  const err = (k: string) => e[k] && <p id={`e-${k}`} role="alert" className="text-sm text-red-700">{e[k]}</p>;
+  const err = (k: string) => e[k] && <p id={`e-${k}`} role="alert" className="text-sm text-error">{e[k]}</p>;
   const aria = (k: string) => (e[k] ? { "aria-invalid": true as const, "aria-describedby": `e-${k}` } : {});
   const field = (k: string, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <div>
@@ -78,7 +78,7 @@ export default function JobForm({ catalog, initial, id, sourceChanged }: { catal
           {tri("salaryNegotiable", "Thương lượng")}
           {field("salarySourceText", "Nguyên văn lương (nguồn)")}
         </div>
-        <p className="text-xs text-gray-600">Cờ “cần kiểm tra lương” tự bật khi lương tháng tối đa × 12 vượt thu nhập năm tối đa.</p>
+        <p className="text-xs text-muted">Cờ “cần kiểm tra lương” tự bật khi lương tháng tối đa × 12 vượt thu nhập năm tối đa.</p>
       </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-semibold">Tiếng Nhật
@@ -109,7 +109,7 @@ export default function JobForm({ catalog, initial, id, sourceChanged }: { catal
       </fieldset>
       <fieldset className="space-y-4">
         <legend className="text-sm font-semibold">Nội dung song ngữ</legend>
-        {sourceChanged && <p role="alert" className="rounded bg-amber-100 p-2 text-sm text-amber-900">Bản gốc đã đổi — kiểm tra lại bản dịch</p>}
+        {sourceChanged && <p role="alert" className="rounded bg-paper-3 p-2 text-sm text-ink">Bản gốc đã đổi — kiểm tra lại bản dịch</p>}
         <label className="block text-sm font-semibold">Trạng thái bản dịch
           <select name="translationStatus" defaultValue={s("translationStatus") || "none"} className={input} {...aria("translationStatus")}>
             <option value="none">Chưa có bản dịch</option><option value="unreviewed">Chưa duyệt</option><option value="approved">Đã duyệt</option>
@@ -130,7 +130,7 @@ export default function JobForm({ catalog, initial, id, sourceChanged }: { catal
           </div>
         ))}
       </fieldset>
-      <button type="submit" disabled={pending} className="min-h-11 rounded bg-navy px-5 font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="min-h-11 rounded bg-ink px-5 font-semibold text-paper disabled:opacity-60">
         {pending ? "Đang lưu…" : "Lưu tin"}
       </button>
     </form>

@@ -4,13 +4,13 @@ import { addNote, changeStatus, deleteApplication, purgeExpired, type AppState }
 import { STATUS_LABELS } from "@/lib/applications/status";
 
 const input = "mt-1 block min-h-11 w-full rounded border px-3 font-normal";
-const btn = "min-h-11 rounded bg-navy px-4 font-semibold text-white disabled:opacity-60";
+const btn = "min-h-11 rounded bg-ink px-4 font-semibold text-paper disabled:opacity-60";
 
 function Msg({ s, id }: { s: AppState; id: string }) {
   return (
     <>
-      {s.error && <p id={id} role="alert" className="text-sm text-red-700">{s.error}</p>}
-      {s.ok && <p role="status" className="text-sm text-green-800">{s.ok}</p>}
+      {s.error && <p id={id} role="alert" className="text-sm text-error">{s.error}</p>}
+      {s.ok && <p role="status" className="text-sm text-success">{s.ok}</p>}
     </>
   );
 }
@@ -27,7 +27,7 @@ export function StatusForm({ id, status }: { id: string; status: string }) {
           {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k} disabled={k === "pending_upload"}>{l}</option>)}
         </select>
       </label>
-      {locked && <p className="text-sm text-gray-600">Hồ sơ chưa tải xong CV</p>}
+      {locked && <p className="text-sm text-muted">Hồ sơ chưa tải xong CV</p>}
       <button type="submit" disabled={pending || locked} className={btn}>Lưu trạng thái</button>
       <Msg s={s} id={uid} />
     </form>
@@ -53,12 +53,12 @@ export function DeleteForm({ id, refCode }: { id: string; refCode: string }) {
   const uid = useId();
   const [s, action, pending] = useActionState<AppState, FormData>(deleteApplication, {});
   return (
-    <form action={action} className="space-y-2 rounded border border-red-300 p-3">
+    <form action={action} className="space-y-2 rounded border border-error p-3">
       <input type="hidden" name="id" value={id} />
       <label className="block text-sm font-semibold">Xóa hồ sơ và CV vĩnh viễn: nhập <code>{refCode}</code> để xác nhận
         <input name="confirm" required autoComplete="off" className={input} aria-invalid={s.error ? true : undefined} aria-describedby={s.error ? uid : undefined} />
       </label>
-      <button type="submit" disabled={pending} className="min-h-11 rounded bg-red-700 px-4 font-semibold text-white disabled:opacity-60">Xóa hồ sơ</button>
+      <button type="submit" disabled={pending} className="min-h-11 rounded bg-error px-4 font-semibold text-paper disabled:opacity-60">Xóa hồ sơ</button>
       <Msg s={s} id={uid} />
     </form>
   );

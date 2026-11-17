@@ -9,20 +9,25 @@ export default function JobDetailPoster({ job, catalog, interviews }: { job: Job
   const places = catalog.prefectures.filter((p) => job.prefectureIds.includes(p.id)).map((p) => p.nameVi);
   const perks = catalog.benefits.filter((b) => job.benefits[b.slug] === true);
   const level = job.jpLevel == null ? UNCONFIRMED : job.jpLevel === "none" ? "Không yêu cầu tiếng Nhật" : job.jpLevel;
+  const exp = job.experienceYearsMin == null ? UNCONFIRMED : `Từ ${job.experienceYearsMin} năm`;
+  const fact = "border-t border-rule-2 pt-3";
   return (
-    <div className="space-y-3 rounded-lg border-2 border-navy bg-white p-6 text-lg">
-      <p className="font-bold text-navy"><span aria-hidden="true">📍</span> {places.join(", ") || UNCONFIRMED}</p>
-      <p><span aria-hidden="true">💴</span> {[monthly, annual].filter(Boolean).join(" · ") || `Lương: ${UNCONFIRMED}`}</p>
-      <p><span aria-hidden="true">🈂</span> {level} · {job.experienceYearsMin == null ? `Kinh nghiệm: ${UNCONFIRMED}` : `≥${job.experienceYearsMin} năm`}</p>
-      {job.content.summary.ja || job.content.summary.vi ? <BilingualBlock text={job.content.summary} status={job.translationStatus} /> : null}
+    <div className="space-y-8">
+      <dl className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={fact}><dt className="text-sm text-muted">Nơi làm</dt><dd className="display-face mt-1 text-[length:var(--text-title)]">{places.join(", ") || UNCONFIRMED}</dd></div>
+        <div className={fact}><dt className="text-sm text-muted">Lương</dt><dd className="display-face mt-1 text-[length:var(--text-title)]">{monthly || annual ? <>{monthly && <span className="block">{monthly}</span>}{annual && <span className="block">{annual}</span>}</> : UNCONFIRMED}</dd></div>
+        <div className={fact}><dt className="text-sm text-muted">Tiếng Nhật</dt><dd className="display-face mt-1 text-[length:var(--text-title)]">{level}</dd></div>
+        <div className={fact}><dt className="text-sm text-muted">Kinh nghiệm</dt><dd className="display-face mt-1 text-[length:var(--text-title)]">{exp}</dd></div>
+      </dl>
+      {job.content.summary.ja || job.content.summary.vi ? <div className="prose-body standfirst max-w-[52ch]"><BilingualBlock text={job.content.summary} status={job.translationStatus} /></div> : null}
       {perks.length > 0 && (
-        <ul className="flex flex-wrap gap-2 text-sm">
-          {perks.map((b) => <li key={b.slug} className="rounded bg-ok/10 px-2 py-0.5 text-ok">{b.nameVi}</li>)}
+        <ul className="flex flex-wrap gap-2">
+          {perks.map((b) => <li key={b.slug} className="tag">{b.nameVi}</li>)}
         </ul>
       )}
       {interviews[0] && (
         <TimezoneToggle>
-          <p className="font-semibold text-warn"><span aria-hidden="true">🗓</span> Phỏng vấn {formatJst(interviews[0].startsAt)}</p>
+          <p className="font-semibold text-accent">Phỏng vấn {formatJst(interviews[0].startsAt)}</p>
           <p className="hidden text-base group-data-[vn=true]:block">= {formatVn(interviews[0].startsAt)}</p>
         </TimezoneToggle>
       )}

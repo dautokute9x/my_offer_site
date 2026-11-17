@@ -17,7 +17,7 @@ export function JobsResults({ className, children }: { className?: string; child
   const { pending } = useJobsNav();
   return (
     <section aria-busy={pending} className={className}>
-      {pending && <p className="text-sm text-slate-600">Đang cập nhật kết quả…</p>}
+      {pending && <p className="text-sm text-muted">Đang cập nhật kết quả…</p>}
       {children}
     </section>
   );

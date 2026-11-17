@@ -13,7 +13,7 @@ const subscribe = (cb: () => void) => {
   return () => m.removeEventListener("change", cb);
 };
 
-const field = "mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-2 text-sm lg:min-h-9";
+const field = "field mt-1 min-h-11 text-sm";
 
 export default function FilterPanel({ catalog, filters: server, total }: { catalog: Catalog; filters: JobFilters; total: number }) {
   const { go: nav } = useJobsNav();
@@ -43,11 +43,11 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
 
   const body = (
     <form onSubmit={(e) => { e.preventDefault(); salary(e.currentTarget); }} className="flex h-full flex-col">
-      <div className="flex items-center justify-between p-4 pb-2">
-        <h2 id="filter-title" ref={title} tabIndex={-1} className="text-lg font-bold text-navy">Bộ lọc</h2>
-        <button type="button" onClick={() => dialog.current?.close()} className="min-h-11 px-3 text-sm lg:hidden">Đóng</button>
+      <div className="flex items-center justify-between border-t-4 border-ink p-4 pb-2 lg:px-0">
+        <h2 id="filter-title" ref={title} tabIndex={-1} className="text-[length:var(--text-title)]">Bộ lọc</h2>
+        <button type="button" onClick={() => dialog.current?.close()} className="btn min-h-11 lg:hidden">Đóng</button>
       </div>
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 pb-4 lg:flex-none lg:overflow-visible">
+      <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-4 accent-ink lg:flex-none lg:overflow-visible lg:px-0">
         <CheckList legend="Tỉnh / thành" selected={f.prefectures} onChange={(v) => go({ prefectures: v })}
           groups={regions.map((r) => ({ key: r, label: r }))}
           items={catalog.prefectures.map((p) => ({
@@ -66,11 +66,11 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
             value: o.slug, label: o.nameVi, group: groupOf(o.groupId).slug,
             search: [o.nameVi, o.nameJa, ...o.aliases].join(" "),
           }))} />
-        <fieldset className="border-t border-slate-200 pt-3">
-          <legend className="font-semibold text-navy">Lương (万円)</legend>
+        <fieldset className="border-t border-rule pt-3">
+          <legend className="font-semibold text-ink">Lương (万円)</legend>
           <div className="mt-2 flex gap-4 text-sm">
             {(["month", "year"] as const).map((p) => (
-              <label key={p} className="flex min-h-9 items-center gap-2">
+              <label key={p} className="flex min-h-11 items-center gap-2">
                 <input type="radio" name="ky" checked={f.period === p} onChange={() => go({ period: p })} />
                 {p === "month" ? "Theo tháng" : "Theo năm"}
               </label>
@@ -87,16 +87,16 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
             </label>
           </div>
         </fieldset>
-        <label className="block border-t border-slate-200 pt-3 text-sm font-semibold text-navy">Tiếng Nhật
-          <select className={`${field} font-normal text-slate-900`} value={f.jpLevel ?? ""}
+        <label className="block border-t border-rule pt-3 text-sm font-semibold text-ink">Tiếng Nhật
+          <select className={`${field} font-normal text-ink`} value={f.jpLevel ?? ""}
             onChange={(e) => go({ jpLevel: (e.target.value || null) as JpLevel | null })}>
             <option value="">Tất cả</option>
             {["N1", "N2", "N3", "N4", "N5"].map((l) => <option key={l} value={l}>Từ {l} trở xuống</option>)}
             <option value="none">Không yêu cầu</option>
           </select>
         </label>
-        <label className="block text-sm font-semibold text-navy">Kinh nghiệm
-          <select className={`${field} font-normal text-slate-900`} value={f.maxExperience ?? ""}
+        <label className="block text-sm font-semibold text-ink">Kinh nghiệm
+          <select className={`${field} font-normal text-ink`} value={f.maxExperience ?? ""}
             onChange={(e) => go({ maxExperience: e.target.value === "" ? null : Number(e.target.value) })}>
             <option value="">Tất cả</option>
             <option value="0">Không cần kinh nghiệm</option>
@@ -106,29 +106,29 @@ export default function FilterPanel({ catalog, filters: server, total }: { catal
         <CheckList legend="Quyền lợi" searchable={false} selected={f.benefits} onChange={(v) => go({ benefits: v })}
           groups={[{ key: "all", label: "" }]}
           items={catalog.benefits.map((b) => ({ value: b.slug, label: b.nameVi, group: "all", search: b.nameVi }))} />
-        <label className="flex min-h-9 items-center gap-2 border-t border-slate-200 pt-3 text-sm font-semibold text-navy">
+        <label className="flex min-h-11 items-center gap-2 border-t border-rule pt-3 text-sm font-semibold text-ink">
           <input type="checkbox" checked={f.hasInterview} onChange={(e) => go({ hasInterview: e.target.checked })} />
           Có lịch phỏng vấn sắp tới
         </label>
       </div>
-      <div className="flex gap-2 border-t border-slate-200 p-4 lg:hidden">
+      <div className="flex gap-2 border-t border-rule p-4 lg:hidden">
         <button type="button" onClick={() => nav("/viec-lam")}
-          className="min-h-11 rounded border border-slate-300 px-4 font-semibold">Xóa tất cả</button>
+          className="btn">Xóa tất cả</button>
         <button type="button" onClick={() => dialog.current?.close()}
-          className="min-h-11 flex-1 rounded bg-brand px-4 font-semibold text-white">Xem {total} kết quả</button>
+          className="btn btn-primary flex-1">Xem {total} kết quả</button>
       </div>
     </form>
   );
-  if (wide) return <div className="w-full rounded-lg border border-slate-200 bg-white">{body}</div>;
+  if (wide) return <div className="w-full">{body}</div>;
   return (
     <>
       <button type="button" aria-haspopup="dialog"
         onClick={() => { dialog.current?.showModal(); title.current?.focus(); }}
-        className="min-h-11 w-full rounded border border-navy bg-white px-4 font-semibold text-navy lg:hidden">
+        className="btn w-full lg:hidden">
         Bộ lọc ({count})
       </button>
       <dialog ref={dialog} aria-labelledby="filter-title"
-        className="m-0 h-full max-h-none w-full max-w-none bg-white p-0 backdrop:bg-black/40 lg:static lg:block lg:h-auto lg:rounded-lg lg:border lg:border-slate-200">
+        className="m-0 h-full max-h-none w-full max-w-none bg-paper p-0 backdrop:bg-ink/40">
         {body}
       </dialog>
     </>

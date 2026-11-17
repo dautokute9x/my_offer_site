@@ -21,7 +21,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
   ]);
   if (a.error || n.error) {
     console.error("[admin/ho-so/id]", a.error?.code, n.error?.code);
-    return <p role="alert" className="text-red-700">Không tải được hồ sơ.</p>;
+    return <p role="alert" className="text-error">Không tải được hồ sơ.</p>;
   }
   const app = a.data;
   if (!app) notFound();
@@ -50,7 +50,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
           {(n.data ?? []).map((x) => (
             <li key={x.id} className="rounded border p-3 text-sm">
               <p className="whitespace-pre-wrap break-words">{x.body}</p>
-              <p className="mt-1 text-xs text-gray-600">{formatJst(x.created_at)} · {x.author_id ? `QTV ${x.author_id.slice(0, 8)}` : "QTV đã xóa"}</p>
+              <p className="mt-1 text-xs text-muted">{formatJst(x.created_at)} · {x.author_id ? `QTV ${x.author_id.slice(0, 8)}` : "QTV đã xóa"}</p>
             </li>
           ))}
         </ul>

@@ -1,38 +1,100 @@
+/* Hallmark · shape: Index-first job board, app screens below · genre: editorial · theme: Editorial (deal 1/3, seed recruitment-job-board-vietnamese-b484·a20900ab·2026-11-17·r0) · redesign: full
+ * hero: Index (/), kept app screens (/viec-lam, /viec-lam/[slug], /lich-phong-van) · nav: edge-aligned over a heavy ink rule · footer: mast · imagery: none · signature: the job index set like a magazine contents page, code and salary in the condensed head
+ * axes: light/display-condensed/chromatic-green · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V4 · weakest: P, a job board argues little; the hero states the one promise (salary and interview time shown up front) and leads with the real list */
+/* Hallmark · waive 44c · /viec-lam, /viec-lam/[slug] and /lich-phong-van open on a search bar or the job head, not a hero · a job seeker comes to scan the list, so the jobs start on the first screen */
+/* Hallmark · waive 79 · the same three job screens end their head block early by design · the job rows below the head fill the fold instead of a hero visual */
+/* Hallmark · waive 49b · long job titles and the placeholder brand wrap at narrow widths · titles are the employer's data and cannot be shortened by the site */
+/* Hallmark · waive 72 · the measured box is the scroll area inside a closed details filter on /lich-phong-van · its overflow is the list of prefectures, padded by its own labels */
+/* Hallmark · reworded "Tìm việc và chuyển việc kỹ sư tại Nhật cho người Việt" to "Việc làm kỹ sư tại Nhật Bản" · 58 names a twelve-word hero head */
+/* Hallmark · kept "Chưa kết nối Supabase — xem README để thiết lập" and "Nội dung mẫu — cần chủ website xác nhận" · a test reads the first, the second is a disclaimer; admin screens were not part of this redesign */
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css" layer(base);
 
 @theme {
-  --color-navy: #0f2747;
-  --color-brand: #176ac0;
-  --color-bg: #f5f7fb;
-  --color-ok: #166534;
-  --color-warn: #b45309;
-  --font-sans: var(--font-be-vietnam), var(--font-noto-jp), system-ui,
-    "Hiragino Sans", "Yu Gothic", sans-serif;
+  /* Hallmark tokens only; Tailwind's default radii and shadows are zeroed: the theme is square and flat. */
+  --color-warn: oklch(48% 0.11 62);
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow: none;
+  --font-sans: var(--font-display);
 }
 
-html {
-  font-size: 16px;
-  line-height: 1.6;
+/* UI text (labels, facts, controls) is the label face; reading text opts into the serif with .prose / .standfirst. */
+body {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 12;
+  color: var(--color-ink-2);
 }
+h1, h2, h3 {
+  font-variation-settings: "wdth" 75, "opsz" 96;
+  color: var(--color-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+h1, h2 { line-height: 0.98; }
 
 /* thanh Ứng tuyển cố định ở đáy trên mobile không được che ô đang focus */
 @media (max-width: 1023.98px) {
-  html {
-    scroll-padding-bottom: 5rem;
+  html { scroll-padding-bottom: 5rem; }
+}
+
+@layer components {
+  /* = .container của Hallmark; tên khác vì Tailwind 4 có utility `container` riêng. */
+  .wrap { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: var(--gutter); }
+  .prose-body {
+    font-family: var(--font-body);
+    font-variation-settings: normal;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    max-width: 68ch;
+    font-variant-numeric: oldstyle-nums;
   }
+  .standfirst {
+    font-family: var(--font-body);
+    font-variation-settings: normal;
+    font-size: var(--text-lead);
+    line-height: 1.35;
+    color: var(--color-ink);
+    max-width: 46ch;
+  }
+  .opens { border-top: var(--rule-heavy) solid var(--color-ink); padding-top: var(--space-md); max-width: none; }
+  .display-face { font-family: var(--font-display); font-weight: 800; font-variation-settings: "wdth" 75, "opsz" 96; color: var(--color-ink); font-variant-numeric: lining-nums tabular-nums; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);
+    min-height: 48px; padding: 0 var(--space-lg);
+    border: var(--rule-hair) solid var(--color-ink); border-radius: 0;
+    font-family: var(--font-display); font-weight: 600; font-variation-settings: "opsz" 12;
+    background: transparent; color: var(--color-ink); text-decoration: none; cursor: pointer; white-space: nowrap;
+    transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+  }
+  .btn:hover { background: var(--color-paper-2); }
+  .btn:active { background: var(--color-paper-3); }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+  .btn-primary { background: var(--color-ink); color: var(--color-paper); }
+  .btn-primary:hover { background: var(--color-ink-2); }
+  .btn-primary:active { background: var(--color-ink); }
+  .field {
+    display: block; width: 100%; min-height: 48px; padding: 0 var(--space-sm);
+    border: var(--rule-hair) solid var(--color-muted); border-radius: 0;
+    background: var(--color-paper); color: var(--color-ink);
+  }
+  .field:hover { border-color: var(--color-ink); }
+  .field:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; border-color: var(--color-ink); }
+  .field:disabled { opacity: 0.55; cursor: not-allowed; }
+  .tag { display: inline-flex; align-items: center; padding: var(--space-3xs) var(--space-xs); font-size: var(--text-xs); background: var(--color-paper-3); color: var(--color-ink); }
+  .tag-accent { background: var(--color-accent); color: var(--color-accent-ink); }
+  .well { background: var(--color-paper-2); border-top: var(--rule-hair) solid var(--color-rule-2); }
+  .link { text-decoration: underline; text-decoration-color: var(--color-rule-2); text-underline-offset: 0.2em; transition: text-decoration-color var(--dur-short) var(--ease-out); }
+  .link:hover { text-decoration-color: var(--color-accent); }
 }
 
-body {
-  background: var(--color-bg);
-  color: #1a2233;
-  font-family: var(--font-sans);
-}
-
-:focus-visible {
-  outline: 2px solid #176ac0;
-  outline-offset: 2px;
-}
-
-footer :focus-visible {
-  outline-color: #ffffff;
-}
+footer :focus-visible { outline-color: var(--color-paper); }

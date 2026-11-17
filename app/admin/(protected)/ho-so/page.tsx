@@ -26,14 +26,14 @@ export default async function ApplicationsAdmin({ searchParams }: { searchParams
   const { data, count, error } = await q;
   if (error) {
     console.error("[admin/ho-so]", error.code);
-    return <p role="alert" className="text-red-700">Không tải được danh sách hồ sơ.</p>;
+    return <p role="alert" className="text-error">Không tải được danh sách hồ sơ.</p>;
   }
   const pages = Math.max(1, Math.ceil((count ?? 0) / PAGE));
   const href = (p: number) => `/admin/ho-so?${new URLSearchParams({ ...(tt && { tt }), ...(tin && { tin }), trang: String(p) })}`;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Hồ sơ ứng viên</h1>
-      {sp["da-xoa"] && <p role="status" className="text-sm text-green-800">Đã xóa hồ sơ.</p>}
+      {sp["da-xoa"] && <p role="status" className="text-sm text-success">Đã xóa hồ sơ.</p>}
       <form className="flex flex-wrap items-end gap-3" role="search">
         <label className="text-sm font-semibold">Mã tin
           <input name="tin" defaultValue={tin} className="mt-1 block min-h-11 rounded border px-3 font-normal" />
@@ -62,7 +62,7 @@ export default async function ApplicationsAdmin({ searchParams }: { searchParams
             ))}
           </tbody>
         </table>
-        {(data ?? []).length === 0 && <p className="py-4 text-sm text-gray-600">Không có hồ sơ nào.</p>}
+        {(data ?? []).length === 0 && <p className="py-4 text-sm text-muted">Không có hồ sơ nào.</p>}
       </div>
       {pages > 1 && (
         <nav aria-label="Phân trang" className="flex items-center gap-3 text-sm">
@@ -73,7 +73,7 @@ export default async function ApplicationsAdmin({ searchParams }: { searchParams
       )}
       <section aria-labelledby="h-purge" className="space-y-2 border-t pt-4">
         <h2 id="h-purge" className="text-lg font-bold">Dọn dẹp</h2>
-        <p className="text-sm text-gray-600">Xóa hồ sơ đã quá hạn lưu và hồ sơ chờ tải CV quá 24 giờ, kèm CV.</p>
+        <p className="text-sm text-muted">Xóa hồ sơ đã quá hạn lưu và hồ sơ chờ tải CV quá 24 giờ, kèm CV.</p>
         <PurgeForm />
       </section>
     </div>

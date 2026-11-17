@@ -34,7 +34,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 const FORMAT = { online: "Online", onsite: "Trực tiếp", unknown: "Hình thức: Chưa xác nhận" };
-const input = "mt-1 min-h-11 w-full rounded border border-slate-300 px-2";
+const input = "field mt-1";
 
 export default async function InterviewSchedulePage({ searchParams }: Props) {
   const f = await parse(await searchParams);
@@ -42,11 +42,11 @@ export default async function InterviewSchedulePage({ searchParams }: Props) {
   const events = await listUpcomingInterviews(f);
   const days = Map.groupBy(events, (e) => jstDateKey(e.startsAt));
   const group = (summary: string, name: string, items: { value: string; label: string }[], sel: string[]) => (
-    <details open={sel.length > 0} className="rounded border border-slate-300 bg-white">
-      <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold text-navy">
+    <details open={sel.length > 0} className="border border-rule-2 bg-paper">
+      <summary className="flex min-h-12 cursor-pointer items-center px-3 text-sm font-semibold text-ink">
         {summary}{sel.length > 0 && ` (${sel.length})`}
       </summary>
-      <div className="max-h-56 overflow-y-auto px-3 pb-2">
+      <div className="max-h-56 overflow-y-auto px-3 pb-2 accent-ink">
         {items.map((i) => (
           <label key={i.value} className="flex min-h-11 items-center gap-2 text-sm">
             <input type="checkbox" name={name} value={i.value} defaultChecked={sel.includes(i.value)} />
@@ -57,47 +57,54 @@ export default async function InterviewSchedulePage({ searchParams }: Props) {
     </details>
   );
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-navy">Lịch phỏng vấn</h1>
-      <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
-        <label className="text-sm font-semibold">Từ ngày (JST)
+    <div className="space-y-12">
+      <header className="grid gap-6 lg:grid-cols-12 lg:gap-8">
+        <h1 className="text-[length:var(--text-display-s)] lg:col-span-7">Lịch phỏng vấn</h1>
+        <p className="standfirst lg:col-span-5 lg:self-end">Giờ ghi theo giờ Nhật. Đăng ký quan tâm không đồng nghĩa giữ suất phỏng vấn.</p>
+      </header>
+      <form method="get" className="well grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
+        <label className="text-sm font-semibold text-ink">Từ ngày (JST)
           <input type="date" name="tu" defaultValue={f.from} className={input} />
         </label>
-        <label className="text-sm font-semibold">Đến ngày (JST)
+        <label className="text-sm font-semibold text-ink">Đến ngày (JST)
           <input type="date" name="den" defaultValue={f.to} className={input} />
         </label>
-        {group("Tỉnh / thành", "tinh", catalog.prefectures.map((p) => ({ value: p.code, label: p.nameVi })), f.prefectures)}
-        {group("Nghề", "nghe", catalog.occupations.map((o) => ({ value: o.slug, label: o.nameVi })), f.occupations)}
+        <div className="sm:pt-6">{group("Tỉnh / thành", "tinh", catalog.prefectures.map((p) => ({ value: p.code, label: p.nameVi })), f.prefectures)}</div>
+        <div className="sm:pt-6">{group("Nghề", "nghe", catalog.occupations.map((o) => ({ value: o.slug, label: o.nameVi })), f.occupations)}</div>
         <div className="flex gap-3 sm:col-span-2 lg:col-span-4">
-          <button type="submit" className="min-h-11 rounded bg-brand px-5 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#176AC0]">Lọc</button>
-          <Link href="/lich-phong-van" className="inline-flex min-h-11 items-center px-3 font-semibold text-brand">Xóa lọc</Link>
+          <button type="submit" className="btn btn-primary">Lọc</button>
+          <Link href="/lich-phong-van" className="btn">Xóa lọc</Link>
         </div>
       </form>
-      <p className="text-sm text-slate-700">Đăng ký quan tâm không đồng nghĩa giữ suất phỏng vấn.</p>
       {events.length === 0 ? (
-        <p>Chưa có lịch phỏng vấn phù hợp. <Link href="/lich-phong-van" className="font-semibold text-brand underline">Xem tất cả lịch</Link></p>
+        <p className="prose-body">Chưa có lịch phỏng vấn phù hợp. <Link href="/lich-phong-van" className="link font-semibold text-ink">Xem tất cả lịch</Link></p>
       ) : (
         <TimezoneToggle>
-          {[...days].map(([key, list]) => (
-            <section key={key} aria-labelledby={`d-${key}`}>
-              <h2 id={`d-${key}`} className="mb-2 text-lg font-bold text-navy">{dayHeading(key)}</h2>
-              <ul className="space-y-2">
-                {list.map((e) => (
-                  <li key={e.id} className="rounded border border-warn/40 bg-orange-50 p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
-                    <div>
-                      <p className="font-semibold text-warn">{formatJst(e.startsAt).split(" · ")[1]}</p>
-                      <p className="hidden text-sm group-data-[vn=true]:block">= {formatVn(e.startsAt)}</p>
-                      <p className="mt-1 font-semibold"><Link href={jobHref(e.job)} className="text-brand underline">{e.job.titleVi}</Link></p>
-                      <p className="text-sm">
-                        Mã {e.job.code} · {catalog.prefectures.filter((p) => e.job.prefectureIds.includes(p.id)).map((p) => p.nameVi).join(", ") || "Chưa xác nhận"} · {FORMAT[e.format]}
-                      </p>
-                    </div>
-                    <Link href={`${jobHref(e.job)}#ung-tuyen`} className="mt-2 inline-flex min-h-11 items-center rounded bg-brand px-4 font-semibold text-white sm:mt-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#176AC0]">Đăng ký quan tâm</Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+          <div className="space-y-12">
+            {[...days].map(([key, list]) => (
+              <section key={key} aria-labelledby={`d-${key}`} className="grid gap-4 border-t-4 border-ink pt-4 lg:grid-cols-12 lg:gap-8">
+                <h2 id={`d-${key}`} className="text-[length:var(--text-title)] lg:col-span-3">{dayHeading(key)}</h2>
+                <ul className="lg:col-span-9">
+                  {list.map((e) => (
+                    <li key={e.id} className="grid gap-x-6 gap-y-2 border-b border-rule py-4 first:pt-0 sm:grid-cols-[6rem_minmax(0,1fr)_auto] sm:items-center">
+                      <div>
+                        <p className="display-face text-2xl leading-none text-accent">{formatJst(e.startsAt).split(" · ")[1]?.split(" ")[0]}</p>
+                        <p className="mt-1 text-xs text-muted">{formatJst(e.startsAt).split(" · ")[1]?.split(" ").slice(1).join(" ")}</p>
+                        <p className="hidden text-xs text-muted group-data-[vn=true]:block">= {formatVn(e.startsAt)}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="display-face text-[length:var(--text-title)] leading-tight"><Link href={jobHref(e.job)} className="link">{e.job.titleVi}</Link></p>
+                        <p className="mt-1 text-sm text-muted">
+                          Mã {e.job.code}, {catalog.prefectures.filter((p) => e.job.prefectureIds.includes(p.id)).map((p) => p.nameVi).join(", ") || "Chưa xác nhận"}, {FORMAT[e.format]}
+                        </p>
+                      </div>
+                      <Link href={`${jobHref(e.job)}#ung-tuyen`} className="btn justify-self-start">Đăng ký quan tâm</Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
         </TimezoneToggle>
       )}
     </div>

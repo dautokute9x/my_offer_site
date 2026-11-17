@@ -11,12 +11,12 @@ export default function BilingualBlock({ text, status }: { text: { ja: string | 
   return (
     <div className="space-y-2">
       {status === "unreviewed" && (
-        <p className="inline-block rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Bản dịch chưa được duyệt</p>
+        <p className="tag">Bản dịch chưa được duyệt</p>
       )}
       {showJa && text.ja ? ja(text.ja) : <p className="whitespace-pre-line">{text.vi}</p>}
       {text.ja && (
         <button type="button" onClick={() => setShowJa(!showJa)} aria-pressed={showJa}
-          className="min-h-11 text-sm font-semibold text-brand underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#176AC0]">
+          className="link min-h-11 font-[family-name:var(--font-display)] text-sm font-semibold text-ink">
           {showJa ? "Xem bản dịch tiếng Việt" : "Xem bản gốc tiếng Nhật"}
         </button>
       )}

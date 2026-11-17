@@ -38,7 +38,7 @@ export default async function EditJob({ params, searchParams }: {
   if (sp.xem === "truoc") {
     return (
       <div className="space-y-4">
-        {job.status !== "published" && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm font-semibold">Xem trước — chưa công khai</p>}
+        {job.status !== "published" && <p role="status" className="rounded border border-rule-2 bg-paper-3 p-3 text-sm font-semibold">Xem trước — chưa công khai</p>}
         <h1 className="text-2xl font-bold">{job.code} — {job.titleVi}</h1>
         <p><Link href={`/admin/tin/${id}`} className="inline-flex min-h-11 items-center underline">← Quay lại chỉnh sửa</Link></p>
         <JobDetailFull job={job} catalog={catalog} interviews={interviews.filter((e) => e.status === "scheduled")} />
@@ -53,7 +53,7 @@ export default async function EditJob({ params, searchParams }: {
         {job.status !== "draft" && <Link href={jobHref(job)} className="inline-flex min-h-11 items-center text-sm underline">Trang công khai</Link>}
         {statusBtn("published", "Đăng tin")}{statusBtn("closed", "Đóng tin")}{statusBtn("draft", "Chuyển về nháp")}
       </div>
-      {sp["da-luu"] && <p role="status" className="rounded bg-green-50 p-3 text-sm text-green-900">Đã lưu.</p>}
+      {sp["da-luu"] && <p role="status" className="rounded bg-paper-3 p-3 text-sm text-success">Đã lưu.</p>}
       <JobForm catalog={catalog} initial={raw} id={id} sourceChanged={sourceChanged} />
       <InterviewEditor jobId={id} events={interviews} missing={sp.loi === "lich-mat"} />
     </div>

@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="space-y-6">
       <nav aria-label="Quản trị" className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b pb-3 text-sm">
         {NAV.map(([href, label]) => <Link key={href} href={href} className="inline-flex min-h-11 items-center font-semibold underline-offset-4 hover:underline">{label}</Link>)}
-        <span className="ml-auto text-xs text-gray-600">{email}</span>
+        <span className="ml-auto text-xs text-muted">{email}</span>
         <form action="/admin/logout" method="post">
           <button type="submit" className="min-h-11 font-semibold underline-offset-4 hover:underline">Đăng xuất</button>
         </form>

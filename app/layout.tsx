@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Noto_Sans_JP } from "next/font/google";
+import { Bricolage_Grotesque, Noto_Sans_JP, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DemoBanner from "@/components/DemoBanner";
 import { getSiteSettings } from "@/lib/data";
 
-const beVietnam = Be_Vietnam_Pro({
-  variable: "--font-be-vietnam",
-  weight: ["400", "600", "700"],
+// Cả hai đều có bộ dấu tiếng Việt; Bricolage cần trục wdth để có dáng chữ hẹp của theme.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["vietnamese", "latin"],
+  axes: ["wdth", "opsz"],
+});
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["vietnamese", "latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
 });
 const notoJp = Noto_Sans_JP({
   variable: "--font-noto-jp",
@@ -29,12 +36,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} ${notoJp.variable}`}>
-      <body className="min-h-screen flex flex-col max-lg:has-[[data-apply-bar]]:pb-16">
-        <a href="#main" className="absolute left-2 top-2 z-50 inline-flex min-h-11 -translate-y-[200%] items-center bg-white px-4 font-semibold text-navy underline focus:translate-y-0">Bỏ qua đến nội dung chính</a>
+    <html lang="vi" className={`${bricolage.variable} ${sourceSerif.variable} ${notoJp.variable}`}>
+      <body className="flex min-h-screen flex-col bg-paper max-lg:has-[[data-apply-bar]]:pb-16">
+        <a href="#main" className="absolute left-2 top-2 z-50 inline-flex min-h-11 -translate-y-[200%] items-center whitespace-nowrap bg-ink px-4 font-semibold text-paper underline focus:translate-y-0">Bỏ qua đến nội dung chính</a>
         <DemoBanner />
         <SiteHeader />
-        <main id="main" tabIndex={-1} className="flex-1 focus:outline-none w-full max-w-6xl mx-auto px-4 py-8">{children}</main>
+        <main id="main" tabIndex={-1} className="wrap flex-1 pt-10 pb-24 focus:outline-none">{children}</main>
         <SiteFooter />
       </body>
     </html>

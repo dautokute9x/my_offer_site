@@ -15,7 +15,7 @@ export default function CatalogForm({ kind, item, groups, canDelete }: {
   const e = state.errors ?? {};
   const v = (k: string) => state.values?.[k] ?? (item?.[k] == null ? "" : Array.isArray(item[k]) ? (item[k] as string[]).join(", ") : String(item[k]));
   const eid = (k: string) => `${uid}-${k}`;
-  const err = (k: string) => e[k] && <p id={eid(k)} role="alert" className="text-sm text-red-700">{e[k]}</p>;
+  const err = (k: string) => e[k] && <p id={eid(k)} role="alert" className="text-sm text-error">{e[k]}</p>;
   const aria = (k: string) => (e[k] ? { "aria-invalid": true as const, "aria-describedby": eid(k) } : {});
   const field = (k: string, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <div>
@@ -56,15 +56,15 @@ export default function CatalogForm({ kind, item, groups, canDelete }: {
             </label>
           )}
         </div>
-        <button type="submit" disabled={pending} className="min-h-11 rounded bg-navy px-4 font-semibold text-white disabled:opacity-60">{item ? "Lưu" : "Thêm"}</button>
-        {state.ok && <span role="status" className="ml-3 text-sm text-green-800">Đã lưu.</span>}
+        <button type="submit" disabled={pending} className="min-h-11 rounded bg-ink px-4 font-semibold text-paper disabled:opacity-60">{item ? "Lưu" : "Thêm"}</button>
+        {state.ok && <span role="status" className="ml-3 text-sm text-success">Đã lưu.</span>}
       </form>
       {canDelete && item && (
         <form action={dAction} className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="kind" value={kind} />
           <input type="hidden" name="id" value={String(item.id)} />
-          <button type="submit" disabled={dPending} className="min-h-11 rounded border border-red-700 px-4 text-sm font-semibold text-red-700 disabled:opacity-60">Xóa</button>
-          {dstate.errors?.form && <p role="alert" className="text-sm text-red-700">{dstate.errors.form}</p>}
+          <button type="submit" disabled={dPending} className="min-h-11 rounded border border-error px-4 text-sm font-semibold text-error disabled:opacity-60">Xóa</button>
+          {dstate.errors?.form && <p role="alert" className="text-sm text-error">{dstate.errors.form}</p>}
         </form>
       )}
     </div>

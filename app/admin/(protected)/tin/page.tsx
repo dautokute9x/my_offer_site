@@ -22,7 +22,7 @@ export default async function JobsAdmin({ searchParams }: { searchParams: Promis
   const { data, count, error } = await query;
   if (error) {
     console.error("[admin/tin]", error.code, error.message);
-    return <p role="alert" className="text-red-700">Không tải được danh sách tin.</p>;
+    return <p role="alert" className="text-error">Không tải được danh sách tin.</p>;
   }
   const pages = Math.max(1, Math.ceil((count ?? 0) / PAGE));
   const href = (p: number) => `/admin/tin?${new URLSearchParams({ ...(tt && { tt }), ...(q && { q }), trang: String(p) })}`;
@@ -30,7 +30,7 @@ export default async function JobsAdmin({ searchParams }: { searchParams: Promis
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Tin tuyển dụng</h1>
-        <Link href="/admin/tin/moi" className="inline-flex min-h-11 items-center rounded bg-navy px-4 font-semibold text-white">Tạo tin mới</Link>
+        <Link href="/admin/tin/moi" className="inline-flex min-h-11 items-center rounded bg-ink px-4 font-semibold text-paper">Tạo tin mới</Link>
       </div>
       <form className="flex flex-wrap items-end gap-3" role="search">
         <label className="text-sm font-semibold">Tìm theo mã hoặc tiêu đề
@@ -51,14 +51,14 @@ export default async function JobsAdmin({ searchParams }: { searchParams: Promis
             {(data ?? []).map((j) => (
               <tr key={j.id} className="border-b">
                 <td className="py-2 pr-3"><Link href={`/admin/tin/${j.id}`} className="inline-flex min-h-11 items-center underline">{j.code}</Link></td>
-                <td className="pr-3">{j.title_vi}{j.salary_needs_review && <span className="ml-2 rounded bg-amber-100 px-2 text-xs">Kiểm tra lương</span>}</td>
+                <td className="pr-3">{j.title_vi}{j.salary_needs_review && <span className="ml-2 rounded bg-paper-3 px-2 text-xs">Kiểm tra lương</span>}</td>
                 <td className="pr-3">{STATUS[j.status]}</td>
                 <td>{j.updated_at.slice(0, 10)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {(data ?? []).length === 0 && <p className="py-4 text-sm text-gray-600">Không có tin nào.</p>}
+        {(data ?? []).length === 0 && <p className="py-4 text-sm text-muted">Không có tin nào.</p>}
       </div>
       {pages > 1 && (
         <nav aria-label="Phân trang" className="flex items-center gap-3 text-sm">

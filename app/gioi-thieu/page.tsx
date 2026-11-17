@@ -8,14 +8,14 @@ export const metadata: Metadata = { title: "Giới thiệu", alternates: { canon
 export default async function AboutPage() {
   const { aboutText } = await getSiteSettings();
   return (
-    <article className="max-w-3xl space-y-4">
-      <h1 className="text-2xl font-bold text-navy">Giới thiệu</h1>
+    <article className="space-y-8">
+      <h1 className="text-[length:var(--text-display-s)]">Giới thiệu</h1>
       {isPlaceholder(aboutText) ? (
-        <p role="note" className="rounded border border-amber-300 bg-amber-100 p-3 font-semibold text-amber-900">
+        <p role="note" className="max-w-[68ch] border-l-4 border-ink bg-paper-3 p-4 font-semibold text-ink">
           Nội dung cần chủ website cung cấp
         </p>
       ) : (
-        <Paragraphs text={aboutText} />
+        <Paragraphs text={aboutText} className="prose-body" />
       )}
     </article>
   );

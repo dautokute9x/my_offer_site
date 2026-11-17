@@ -8,37 +8,34 @@ const nav = [
   { href: "/gioi-thieu", label: "Giới thiệu" },
   { href: "/lien-he", label: "Liên hệ" },
 ];
-const cta = "inline-flex min-h-11 items-center rounded bg-brand px-4 font-semibold text-white";
+const link = "link inline-flex min-h-11 items-center whitespace-nowrap decoration-transparent";
 
 export default async function SiteHeader() {
   const { brandName } = await getSiteSettings();
   return (
-    <header className="bg-white border-b border-slate-200">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2">
-        <Link href="/" className="text-lg font-bold text-navy">
+    <header className="border-b-4 border-ink bg-paper">
+      <div className="wrap flex min-h-18 items-center justify-between gap-6">
+        <Link href="/" aria-label={`${brandName}, trang chủ`} className="display-face whitespace-nowrap text-xl leading-none sm:text-2xl">
           {brandName}
         </Link>
-        <nav aria-label="Menu chính" className="hidden items-center gap-5 md:flex">
+        <nav aria-label="Menu chính" className="hidden items-center gap-7 lg:flex">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="inline-flex min-h-11 items-center hover:text-brand">
+            <Link key={n.href} href={n.href} className={link}>
               {n.label}
             </Link>
           ))}
-          <Link href="/lien-he#tu-van" className={cta}>
+          <Link href="/lien-he#tu-van" className="btn btn-primary">
             Nhận tư vấn
           </Link>
         </nav>
         <MobileMenu>
-          <nav
-            aria-label="Menu di động"
-            className="absolute right-0 z-10 mt-1 flex w-56 flex-col rounded border border-slate-200 bg-white p-2 shadow"
-          >
+          <nav aria-label="Menu di động" className="absolute right-0 z-10 mt-2 flex w-64 flex-col border border-ink bg-paper p-2">
             {nav.map((n) => (
-              <Link key={n.href} href={n.href} className="flex min-h-11 items-center px-2">
+              <Link key={n.href} href={n.href} className="flex min-h-12 items-center border-b border-rule px-3">
                 {n.label}
               </Link>
             ))}
-            <Link href="/lien-he#tu-van" className={`${cta} justify-center`}>
+            <Link href="/lien-he#tu-van" className="btn btn-primary mt-2">
               Nhận tư vấn
             </Link>
           </nav>

@@ -20,7 +20,7 @@ export default function TimezoneToggle({ children }: { children: ReactNode }) {
   return (
     <div data-vn={vn} className="group space-y-3">
       <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
-        <input type="checkbox" checked={vn} onChange={(e) => change(e.target.checked)} className="size-5" />
+        <input type="checkbox" checked={vn} onChange={(e) => change(e.target.checked)} className="size-5 accent-ink" />
         Hiện giờ Việt Nam
       </label>
       {children}

@@ -19,13 +19,13 @@ export default function CheckList(p: {
   const nq = normText(q);
   const toggle = (v: string) => p.onChange(p.selected.includes(v) ? p.selected.filter((x) => x !== v) : [...p.selected, v]);
   return (
-    <fieldset className="border-t border-slate-200 pt-3">
-      <legend className="font-semibold text-navy">{p.legend}</legend>
+    <fieldset className="border-t border-rule pt-3">
+      <legend className="font-semibold text-ink">{p.legend}</legend>
       {p.searchable !== false && (
         <>
           <label htmlFor={`${id}-q`} className="sr-only">Tìm trong {p.legend}</label>
           <input id={`${id}-q`} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm…"
-            className="mt-2 min-h-11 w-full rounded border border-slate-300 px-2 text-sm lg:min-h-9" />
+            className="field mt-2 min-h-11 text-sm" />
         </>
       )}
       <div className="mt-2 max-h-56 overflow-y-auto pr-1">
@@ -35,15 +35,15 @@ export default function CheckList(p: {
           return (
             <div key={g.key} className="mb-2">
               {g.toggle ? (
-                <label className="flex min-h-9 items-center gap-2 text-sm font-semibold">
+                <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink">
                   <input type="checkbox" checked={g.toggle.checked} onChange={(e) => g.toggle!.onChange(e.target.checked)} />
                   {g.label} (cả nhóm)
                 </label>
               ) : (
-                g.label && <div className="text-xs font-semibold uppercase text-slate-600">{g.label}</div>
+                g.label && <div className="pt-2 text-xs text-muted">{g.label}</div>
               )}
               {items.map((i) => (
-                <label key={i.value} className={`flex min-h-9 items-center gap-2 text-sm ${g.toggle ? "pl-5" : ""}`}>
+                <label key={i.value} className={`flex min-h-11 items-center gap-2 text-sm ${g.toggle ? "pl-5" : ""}`}>
                   <input type="checkbox" checked={p.selected.includes(i.value)} onChange={() => toggle(i.value)} />
                   {i.label}
                 </label>

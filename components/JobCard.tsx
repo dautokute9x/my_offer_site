@@ -9,56 +9,51 @@ const dmy = (iso: string) => {
   return `${d}/${m}/${y}`;
 };
 
+// Một dòng mục lục: mã tin | tiêu đề | các dữ kiện. Ở chế độ poster (group /grid) các cột xếp chồng.
 export default function JobCard({ job, catalog }: { job: JobSummary; catalog: Catalog }) {
   const { monthly, annual } = salaryLines(job);
-  const salary = [monthly, annual].filter(Boolean).join(" · ");
   const places = catalog.prefectures.filter((p) => job.prefectureIds.includes(p.id)).map((p) => p.nameVi);
   const perks = catalog.benefits.filter((b) => b.featured && job.benefits[b.slug] === true).slice(0, 3);
   const exp = job.experienceYearsMin;
-  const req = [job.jpLevel && (job.jpLevel === "none" ? "Không yêu cầu tiếng Nhật" : job.jpLevel), exp != null && `≥${exp} năm`]
+  const req = [job.jpLevel && (job.jpLevel === "none" ? "Không yêu cầu tiếng Nhật" : `Tiếng Nhật ${job.jpLevel}`), exp != null && `từ ${exp} năm kinh nghiệm`]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
   return (
-    <article className="relative flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm hover:border-brand group-data-[view=poster]/grid:border-2 group-data-[view=poster]/grid:border-navy group-data-[view=poster]/grid:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
-        <span className="font-semibold text-navy">#{job.code}</span>
-        <span>
-          {job.isDemo && <span className="mr-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Dữ liệu minh họa</span>}
-          Cập nhật {dmy(job.updatedAt)}
-        </span>
+    <article className="group/row relative grid gap-x-8 gap-y-4 border-t border-rule py-6 transition-colors duration-200 hover:bg-paper-2 md:grid-cols-[7.5rem_minmax(0,1fr)_minmax(0,17rem)] group-data-[view=poster]/grid:flex group-data-[view=poster]/grid:flex-col group-data-[view=poster]/grid:border-t-4 group-data-[view=poster]/grid:border-ink group-data-[view=poster]/grid:hover:bg-transparent">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 md:block">
+        <p className="display-face text-2xl leading-none">#{job.code}</p>
+        <p className="text-xs text-muted md:mt-2">Cập nhật {dmy(job.updatedAt)}</p>
+        {job.isDemo && <p className="tag md:mt-2">Dữ liệu minh họa</p>}
       </div>
-      <h3 className="text-lg font-bold leading-snug text-navy group-data-[view=poster]/grid:text-xl">
-        <Link href={jobHref(job)} className="after:absolute after:inset-0">
-          {job.titleVi}
-        </Link>
-      </h3>
-      <p lang="ja" className="text-sm text-slate-600">{job.titleJa}</p>
-      {job.content.summary.vi && (
-        <p className="line-clamp-3 hidden text-sm text-slate-700 group-data-[view=poster]/grid:block">{job.content.summary.vi}</p>
-      )}
-      <p className="text-sm"><span aria-hidden="true">📍</span> {places.join(", ") || UNCONFIRMED}</p>
-      <p className="text-sm">
-        <span aria-hidden="true">💴</span> {salary || `Lương: ${UNCONFIRMED}`}
-        {job.salaryNegotiable === true && (
-          <span className="ml-2 rounded bg-blue-50 px-2 py-0.5 text-xs text-brand">Có thể thương lượng</span>
+      <div className="min-w-0">
+        <h3 className="text-[length:var(--text-title)] leading-tight group-data-[view=poster]/grid:text-[length:var(--text-display-s)]">
+          <Link href={jobHref(job)} className="link decoration-transparent after:absolute after:inset-0 group-hover/row:decoration-accent">
+            {job.titleVi}
+          </Link>
+        </h3>
+        <p lang="ja" className="mt-1 text-sm text-muted">{job.titleJa}</p>
+        {job.content.summary.vi && (
+          <p className="prose-body mt-3 line-clamp-3 hidden group-data-[view=poster]/grid:block">{job.content.summary.vi}</p>
         )}
-      </p>
-      {(req || perks.length > 0) && (
-        <p className="flex flex-wrap items-center gap-2 text-sm">
-          {req && <span>{req}</span>}
-          {perks.map((b) => (
-            <span key={b.slug} className="rounded bg-ok/10 px-2 py-0.5 text-xs text-ok">{b.nameVi}</span>
-          ))}
-        </p>
-      )}
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1 text-sm">
-        {job.nextInterview ? (
-          <span className="font-semibold text-warn"><span aria-hidden="true">🗓</span> <abbr title="Phỏng vấn">PV</abbr> {formatJst(job.nextInterview.startsAt)}</span>
-        ) : (
-          <span />
+        {(job.salaryNegotiable === true || perks.length > 0) && (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {job.salaryNegotiable === true && <li className="tag">Có thể thương lượng</li>}
+            {perks.map((b) => <li key={b.slug} className="tag">{b.nameVi}</li>)}
+          </ul>
         )}
-        <span className="font-semibold text-brand">Xem chi tiết →</span>
       </div>
+      <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] content-start gap-x-3 gap-y-1.5 text-sm">
+        <dt className="text-muted">Nơi làm</dt>
+        <dd className="text-ink">{places.join(", ") || UNCONFIRMED}</dd>
+        <dt className="text-muted">Lương</dt>
+        <dd className="text-ink tabular-nums">
+          {monthly || annual ? <>{monthly && <span className="block">{monthly}</span>}{annual && <span className="block">{annual}</span>}</> : UNCONFIRMED}
+        </dd>
+        {req && <><dt className="text-muted">Yêu cầu</dt><dd className="text-ink">{req}</dd></>}
+        {job.nextInterview && (
+          <><dt className="text-muted">Phỏng vấn</dt><dd className="font-semibold text-accent">{formatJst(job.nextInterview.startsAt)}</dd></>
+        )}
+      </dl>
     </article>
   );
 }

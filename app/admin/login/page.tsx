@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <form action={login} className="mx-auto max-w-sm space-y-4">
       <h1 className="text-2xl font-bold">Đăng nhập quản trị</h1>
-      {message && <p role="alert" className="text-sm text-red-700">{message}</p>}
+      {message && <p role="alert" className="text-sm text-error">{message}</p>}
       <input type="hidden" name="next" value={safeNext(next)} />
       <label className="block text-sm font-semibold">Email
         <input name="email" type="email" required autoComplete="username" className="mt-1 block min-h-11 w-full rounded border px-3 font-normal" />
@@ -27,7 +27,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <label className="block text-sm font-semibold">Mật khẩu
         <input name="password" type="password" required autoComplete="current-password" className="mt-1 block min-h-11 w-full rounded border px-3 font-normal" />
       </label>
-      <button type="submit" className="min-h-11 rounded bg-navy px-5 font-semibold text-white">Đăng nhập</button>
+      <button type="submit" className="min-h-11 rounded bg-ink px-5 font-semibold text-paper">Đăng nhập</button>
     </form>
   );
 }

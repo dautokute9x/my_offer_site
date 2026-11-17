@@ -40,13 +40,13 @@ export default function ActiveChips({ filters: f, catalog }: { filters: JobFilte
       {chips.map((c) => (
         <li key={c.label}>
           <Link href={href(c.next)} aria-label={`Bỏ lọc: ${c.label}`}
-            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-brand bg-white px-3 text-sm text-brand">
-            {c.label} <span aria-hidden>✕</span>
+            className="inline-flex min-h-11 items-center gap-2 border border-ink bg-paper px-3 text-sm text-ink transition-colors duration-200 hover:bg-paper-2">
+            {c.label} <span aria-hidden className="text-muted">✕</span>
           </Link>
         </li>
       ))}
       <li>
-        <Link href="/viec-lam" className="inline-flex min-h-9 items-center px-2 text-sm text-slate-700 underline">Xóa tất cả</Link>
+        <Link href="/viec-lam" className="link inline-flex min-h-11 items-center px-2 text-sm text-muted">Xóa tất cả</Link>
       </li>
     </ul>
   );

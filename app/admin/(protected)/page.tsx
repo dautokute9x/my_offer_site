@@ -27,7 +27,7 @@ export default async function Dashboard() {
   const err = counts.find((c) => c.error)?.error ?? review.error ?? apps.error ?? events.error;
   if (err) {
     console.error("[admin/dashboard]", err.code, err.message);
-    return <p role="alert" className="text-red-700">Không tải được dữ liệu tổng quan.</p>;
+    return <p role="alert" className="text-error">Không tải được dữ liệu tổng quan.</p>;
   }
   const reviewRows = review.data ?? [];
   const upcoming = events.data ?? [];
@@ -48,7 +48,7 @@ export default async function Dashboard() {
       </section>
       <section aria-labelledby="h-iv">
         <h2 id="h-iv" className="mb-2 font-semibold">5 lịch phỏng vấn sắp tới</h2>
-        {upcoming.length === 0 ? <p className="text-sm text-gray-600">Chưa có lịch.</p> : (
+        {upcoming.length === 0 ? <p className="text-sm text-muted">Chưa có lịch.</p> : (
           <ul className="space-y-1 text-sm">
             {upcoming.map((e) => <li key={e.id}>{formatJst(e.starts_at)} — {e.jobs ? `${e.jobs.code} ${e.jobs.title_vi}` : "(tin đã xóa)"}</li>)}
           </ul>
@@ -56,7 +56,7 @@ export default async function Dashboard() {
       </section>
       <section aria-labelledby="h-sal">
         <h2 id="h-sal" className="mb-2 font-semibold">Tin cần kiểm tra lương</h2>
-        {reviewRows.length === 0 ? <p className="text-sm text-gray-600">Không có.</p> : (
+        {reviewRows.length === 0 ? <p className="text-sm text-muted">Không có.</p> : (
           <ul className="list-disc pl-5 text-sm">
             {reviewRows.map((j) => <li key={j.id}><Link href={`/admin/tin/${j.id}`} className="underline">{j.code} — {j.title_vi}</Link></li>)}
           </ul>

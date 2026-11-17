@@ -11,8 +11,8 @@ export default function MobileMenu({ children }: { children: React.ReactNode }) 
     ref.current?.removeAttribute("open");
   }, [pathname]);
   return (
-    <details ref={ref} className="relative md:hidden">
-      <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold text-navy">
+    <details ref={ref} className="relative lg:hidden">
+      <summary className="btn min-h-11 cursor-pointer list-none">
         Menu
       </summary>
       {children}

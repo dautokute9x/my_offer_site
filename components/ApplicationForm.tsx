@@ -4,7 +4,7 @@ import { isSuccess } from "@/lib/application-response";
 import { ALLOWED_EXT, MAX_CV_BYTES, validateApplication, type ApplicationInput } from "@/lib/validate";
 
 const LEVELS: [string, string][] = [["", "Chưa chọn"], ["N1", "N1"], ["N2", "N2"], ["N3", "N3"], ["N4", "N4"], ["N5", "N5"], ["none", "Chưa có/Không"]];
-const input = "mt-1 block min-h-11 w-full rounded border border-slate-400 px-3 py-2";
+const input = "field mt-1 py-2";
 const FIELDS = ["fullName", "email", "phone", "facebook", "jpLevel", "file", "note", "consent"];
 
 // XMLHttpRequest (không phải fetch) để có sự kiện tiến độ tải lên.
@@ -76,7 +76,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
         try {
           await putFile(data.upload.signedUrl, f, setProgress);
         } catch {
-          setGeneral("Không tải được CV lên. Dữ liệu của bạn vẫn được giữ — vui lòng thử lại.");
+          setGeneral("Không tải được CV lên. Dữ liệu của bạn vẫn được giữ, vui lòng thử lại.");
           return;
         } finally {
           setProgress(null);
@@ -85,14 +85,14 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
         data = await res.json().catch(() => null);
       }
       const se = data?.errors && typeof data.errors === "object" ? (data.errors as Record<string, string>) : null;
-      if (isSuccess(res.ok, data)) setDone(`Đã nhận hồ sơ — mã ${data.refCode}`);
+      if (isSuccess(res.ok, data)) setDone(`Đã nhận hồ sơ, mã ${data.refCode}`);
       else if (se && Object.keys(se).some((k) => se[k] && visible(k))) {
         setErrors(se);
         setTimeout(() => focusFirst(se), 0);
       }
       else setGeneral(data?.message || "Không gửi được hồ sơ. Vui lòng kiểm tra lại và thử lại.");
     } catch {
-      setGeneral("Không gửi được do lỗi mạng. Dữ liệu của bạn vẫn được giữ — vui lòng thử lại.");
+      setGeneral("Không gửi được do lỗi mạng. Dữ liệu của bạn vẫn được giữ, vui lòng thử lại.");
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -101,45 +101,45 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
 
   const field = (name: string, label: string, el: (p: object) => React.ReactNode) => (
     <div>
-      <label htmlFor={`f-${name}`} className="font-semibold">{label}</label>
+      <label htmlFor={`f-${name}`} className="text-sm font-semibold text-ink">{label}</label>
       {el({ id: `f-${name}`, name, "aria-invalid": errors[name] ? true : undefined, "aria-describedby": errors[name] ? `e-${name}` : undefined })}
-      {errors[name] && <p id={`e-${name}`} className="mt-1 text-sm font-semibold text-red-800">{errors[name]}</p>}
+      {errors[name] && <p id={`e-${name}`} className="mt-1 text-sm font-semibold text-error">{errors[name]}</p>}
     </div>
   );
 
   return (
     <>
-    <p ref={statusRef} tabIndex={-1} role="status" className={done ? "rounded bg-green-50 px-4 py-3 font-semibold text-green-900" : undefined}>{done}</p>
-    {!done && <form ref={formRef} onSubmit={onSubmit} method="post" action="/api/applications/start" encType="multipart/form-data" noValidate aria-busy={submitting} className="space-y-4">
-      {general && <p role="alert" className="rounded bg-red-50 px-4 py-3 font-semibold text-red-900">{general}</p>}
-      {errors.contact && <p id="e-contact" role="alert" className="rounded bg-red-50 px-4 py-3 font-semibold text-red-900">{errors.contact}</p>}
-      {errors.kind && <p role="alert" className="font-semibold text-red-900">{errors.kind}</p>}
+    <p ref={statusRef} tabIndex={-1} role="status" className={done ? "border-l-4 border-success bg-paper px-4 py-3 font-semibold text-success" : undefined}>{done}</p>
+    {!done && <form ref={formRef} onSubmit={onSubmit} method="post" action="/api/applications/start" encType="multipart/form-data" noValidate aria-busy={submitting} className="space-y-5 accent-ink">
+      {general && <p role="alert" className="border-l-4 border-error bg-paper px-4 py-3 font-semibold text-error">{general}</p>}
+      {errors.contact && <p id="e-contact" role="alert" className="border-l-4 border-error bg-paper px-4 py-3 font-semibold text-error">{errors.contact}</p>}
+      {errors.kind && <p role="alert" className="font-semibold text-error">{errors.kind}</p>}
       {jobCode && (
         <p className="text-sm">
-          Tin: <input readOnly aria-label="Mã tin" value={`#${jobCode}`} className="w-24 border-0 bg-transparent font-semibold" />
-          {jobTitle && <input readOnly aria-label="Tên tin" value={jobTitle} className="w-full border-0 bg-transparent" />}
+          Tin: <input readOnly aria-label="Mã tin" value={`#${jobCode}`} className="min-h-11 w-28 border border-muted bg-paper-3 px-2 font-semibold text-ink" />
+          {jobTitle && <input readOnly aria-label="Tên tin" value={jobTitle} className="mt-2 min-h-11 w-full border border-muted bg-paper-3 px-2 text-ink" />}
         </p>
       )}
       {field("fullName", "Họ và tên", (p) => <input {...p} autoComplete="name" required maxLength={100} className={input} />)}
-      <p className="text-sm text-slate-700">Cần ít nhất một cách liên hệ bên dưới.</p>
+      <p className="text-sm text-muted">Cần ít nhất một cách liên hệ bên dưới.</p>
       {field("email", "Email", (p) => <input {...p} type="email" autoComplete="email" className={input} />)}
       {field("phone", "Điện thoại / Zalo", (p) => <input {...p} type="tel" autoComplete="tel" className={input} />)}
       {field("facebook", "Facebook (liên kết hoặc tên)", (p) => <input {...p} className={input} />)}
       {field("jpLevel", "Trình độ tiếng Nhật", (p) => <select {...p} defaultValue="" className={input}>{LEVELS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>)}
       {apply && field("file", `CV (${ALLOWED_EXT.join(", ")}; tối đa ${MAX_CV_BYTES / 1024 / 1024} MB)`, (p) => <input {...p} name="cv" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" className={input} />)}
       {apply && (
-        <button type="button" onClick={() => setKind("consult")} className="font-semibold text-brand underline">Chưa có CV? Nhận tư vấn trước</button>
+        <button type="button" onClick={() => setKind("consult")} className="link min-h-11 whitespace-nowrap font-semibold text-ink">Chưa có CV? Nhận tư vấn trước</button>
       )}
       {!apply && initialKind === "apply" && (
-        <button type="button" onClick={() => setKind("apply")} className="font-semibold text-brand underline">Quay lại ứng tuyển với CV</button>
+        <button type="button" onClick={() => setKind("apply")} className="link min-h-11 whitespace-nowrap font-semibold text-ink">Quay lại ứng tuyển với CV</button>
       )}
       {field("note", "Ghi chú", (p) => <textarea {...p} rows={4} maxLength={2000} className={input} />)}
       <div>
         <label className="flex items-start gap-2">
           <input type="checkbox" name="consent" aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? "e-consent" : undefined} className="mt-1 size-5" />
-          <span>Tôi đồng ý để xử lý thông tin cá nhân nhằm mục đích tuyển dụng và tư vấn, lưu tối đa {retentionMonths} tháng. Xem <a href="/chinh-sach-bao-mat" target="_blank" rel="noopener" className="font-semibold text-brand underline">Chính sách bảo mật (mở tab mới)</a>.</span>
+          <span>Tôi đồng ý để xử lý thông tin cá nhân nhằm mục đích tuyển dụng và tư vấn, lưu tối đa {retentionMonths} tháng. Xem <a href="/chinh-sach-bao-mat" target="_blank" rel="noopener" className="link font-semibold text-ink">Chính sách bảo mật (mở tab mới)</a>.</span>
         </label>
-        {errors.consent && <p id="e-consent" className="mt-1 text-sm font-semibold text-red-800">{errors.consent}</p>}
+        {errors.consent && <p id="e-consent" className="mt-1 text-sm font-semibold text-error">{errors.consent}</p>}
       </div>
       {/* Đọc cho trình đọc màn hình theo bước 25% để không đọc liên tục. */}
       <p aria-live="polite" className="sr-only">{progress !== null ? `Đang tải CV… ${Math.floor(progress / 25) * 25}%` : ""}</p>
@@ -149,7 +149,7 @@ export default function ApplicationForm({ kind: initialKind, jobCode, jobTitle, 
           <progress value={progress} max={100} className="mt-1 block w-full" />
         </label>
       )}
-      <button type="submit" disabled={submitting} aria-busy={submitting} className="inline-flex min-h-11 items-center justify-center rounded bg-brand px-6 font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={submitting} aria-busy={submitting} className="btn btn-primary">
         {submitting ? "Đang gửi…" : general ? "Thử lại" : apply ? "Gửi hồ sơ" : "Gửi yêu cầu tư vấn"}
       </button>
     </form>}

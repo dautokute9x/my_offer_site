@@ -30,17 +30,17 @@ export default function ViewToggle({ summary, children }: { summary: ReactNode; 
     window.dispatchEvent(new Event("jobview"));
   };
   return (
-    <div data-view={view} className="group/grid space-y-4">
+    <div data-view={view} className="group/grid space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {summary}
-        <div role="group" aria-label="Kiểu hiển thị" className="inline-flex overflow-hidden rounded border border-navy">
+        <div role="group" aria-label="Kiểu hiển thị" className="inline-flex border border-ink">
           {(["list", "poster"] as const).map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={view === v}
               onClick={() => pick(v)}
-              className={`min-h-11 px-4 text-sm font-semibold lg:min-h-9 ${view === v ? "bg-navy text-white" : "bg-white text-navy"}`}
+              className={`min-h-11 px-4 text-sm font-semibold transition-colors duration-200 ${view === v ? "bg-ink text-paper" : "bg-paper text-ink hover:bg-paper-2"}`}
             >
               {v === "list" ? "Danh sách" : "Poster"}
             </button>
