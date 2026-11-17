@@ -1,4 +1,6 @@
-import { cancelInterview, deleteInterview, saveInterview } from "@/app/admin/(protected)/tin/actions";
+"use client";
+import { useActionState } from "react";
+import { cancelInterview, deleteInterview, saveInterview, type InterviewState } from "@/app/admin/(protected)/tin/actions";
 import { formatJst } from "@/lib/time";
 import type { InterviewEvent } from "@/lib/types";
 
@@ -6,11 +8,13 @@ const FORMAT = { online: "Online", onsite: "Trực tiếp", unknown: "Chưa xác
 const input = "mt-1 block min-h-11 rounded border px-3 font-normal";
 const btn = "min-h-11 rounded border px-3 text-sm font-semibold";
 
-export default function InterviewEditor({ jobId, events, error }: { jobId: number; events: InterviewEvent[]; error?: boolean }) {
+export default function InterviewEditor({ jobId, events, missing }: { jobId: number; events: InterviewEvent[]; missing?: boolean }) {
+  const [state, action, pending] = useActionState<InterviewState, FormData>(saveInterview.bind(null, jobId), {});
+  const v = state.values ?? {};
   return (
     <section aria-labelledby="h-pv" className="space-y-3">
       <h2 id="h-pv" className="text-lg font-bold">Lịch phỏng vấn</h2>
-      {error && <p role="alert" className="text-sm text-red-700">Ngày hoặc giờ không hợp lệ, chưa lưu lịch.</p>}
+      {missing && <p role="alert" className="text-sm text-red-700">Không tìm thấy lịch phỏng vấn (có thể đã bị xóa).</p>}
       {events.length === 0 ? <p className="text-sm text-gray-600">Chưa có lịch.</p> : (
         <ul className="space-y-2">
           {events.map((e) => (
@@ -25,14 +29,15 @@ export default function InterviewEditor({ jobId, events, error }: { jobId: numbe
           ))}
         </ul>
       )}
-      <form action={saveInterview.bind(null, jobId)} className="flex flex-wrap items-end gap-3">
-        <label className="text-sm font-semibold">Ngày (JST)<input type="date" name="date" required className={input} /></label>
-        <label className="text-sm font-semibold">Giờ (JST)<input type="time" name="time" required className={input} /></label>
+      {state.error && <p id="e-lich" role="alert" className="text-sm text-red-700">{state.error}</p>}
+      <form key={state.nonce ?? 0} action={action} className="flex flex-wrap items-end gap-3">
+        <label className="text-sm font-semibold">Ngày (JST)<input type="date" name="date" required defaultValue={v.date} className={input} /></label>
+        <label className="text-sm font-semibold">Giờ (JST)<input type="time" name="time" required defaultValue={v.time} className={input} /></label>
         <label className="text-sm font-semibold">Hình thức
-          <select name="format" className={input}><option value="unknown">Chưa xác nhận</option><option value="online">Online</option><option value="onsite">Trực tiếp</option></select>
+          <select name="format" defaultValue={v.format} className={input}><option value="unknown">Chưa xác nhận</option><option value="online">Online</option><option value="onsite">Trực tiếp</option></select>
         </label>
-        <label className="text-sm font-semibold">Ghi chú công khai<input name="publicNote" className={input} /></label>
-        <button type="submit" className="min-h-11 rounded bg-navy px-4 font-semibold text-white">Thêm lịch</button>
+        <label className="text-sm font-semibold">Ghi chú công khai<input name="publicNote" defaultValue={v.publicNote} className={input} /></label>
+        <button type="submit" disabled={pending} className="min-h-11 rounded bg-navy px-4 font-semibold text-white">Thêm lịch</button>
       </form>
     </section>
   );
