@@ -46,7 +46,7 @@ const fake = {
   },
 };
 vi.mock("@/lib/supabase/admin", () => ({ createAdminSupabase: () => fake }));
-import { clientIp, completeApplication, removeApplicationObjects, startApplication } from "@/lib/applications/server";
+import { clientIp, completeApplication, errorResponse, removeApplicationObjects, removeObjectsAt, startApplication } from "@/lib/applications/server";
 import { POST as startPOST } from "@/app/api/applications/start/route";
 
 const ID = "11111111-1111-4111-8111-111111111111";
@@ -75,9 +75,10 @@ describe("completeApplication", () => {
     expect(remove).toHaveBeenCalledWith([PATH]);
     expect(row!.status).toBe("pending_upload");
   });
-  it("kích thước thật 15 MB → invalid_file", async () => {
+  it("kích thước thật 15 MB → file_too_large", async () => {
     object = { size: 15 * 1024 * 1024, bytes: pdf };
-    expect(await completeApplication(ID, "k-1")).toEqual({ error: "invalid_file" });
+    expect(await completeApplication(ID, "k-1")).toEqual({ error: "file_too_large" });
+    expect(errorResponse("file_too_large").status).toBe(413);
     expect(remove).toHaveBeenCalled();
     expect(row!.status).toBe("pending_upload");
   });
@@ -201,6 +202,20 @@ describe("removeApplicationObjects", () => {
   it("không có hồ sơ → not_found", async () => {
     row = null;
     expect(await removeApplicationObjects(ID)).toEqual({ error: "not_found" });
+  });
+});
+
+describe("removeObjectsAt: tiền tố thư mục", () => {
+  it.each([
+    ["2026-10-31T23:30:00+00:00", "2026/10"],
+    ["2026-12-01T08:59:59+09:00", "2026/11"], // vẫn 30/11 theo UTC
+    ["2027-01-01T05:00:00+09:00", "2026/12"], // qua năm theo JST nhưng chưa theo UTC
+    ["2026-03-05T00:00:00Z", "2026/03"], // tháng có số 0 đầu
+  ])("created_at %s → cvs/%s/<id>", async (createdAt, ym) => {
+    dirFiles = ["a.pdf"];
+    expect(await removeObjectsAt(ID, createdAt)).toEqual({ ok: true });
+    expect(listed).toEqual([`cvs/${ym}/${ID}`]);
+    expect(remove).toHaveBeenCalledWith([`cvs/${ym}/${ID}/a.pdf`]);
   });
 });
 

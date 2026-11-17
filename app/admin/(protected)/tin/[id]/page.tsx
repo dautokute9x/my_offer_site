@@ -55,7 +55,7 @@ export default async function EditJob({ params, searchParams }: {
       </div>
       {sp["da-luu"] && <p role="status" className="rounded bg-green-50 p-3 text-sm text-green-900">Đã lưu.</p>}
       <JobForm catalog={catalog} initial={raw} id={id} sourceChanged={sourceChanged} />
-      <InterviewEditor jobId={id} events={interviews} error={sp.loi === "lich"} />
+      <InterviewEditor jobId={id} events={interviews} missing={sp.loi === "lich-mat"} />
     </div>
   );
 }
